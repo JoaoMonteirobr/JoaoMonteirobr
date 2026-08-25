@@ -1,7 +1,12 @@
-const CACHE='matos-shell-v1';
+importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js');
+const firebaseConfig={apiKey:'AIzaSyBZpcSyibLfX_AJDxfsAz7VJid_Cjrvlnw',authDomain:'matos-gestao-de-alugeis.firebaseapp.com',projectId:'matos-gestao-de-alugeis',storageBucket:'matos-gestao-de-alugeis.firebasestorage.app',messagingSenderId:'106797791955',appId:'1:106797791955:web:62f7a01f93bd8383fd7226',measurementId:'G-XK3NCD25B8'};
+firebase.initializeApp(firebaseConfig);
+const messaging=firebase.messaging();
+const CACHE='matos-shell-v2';
 const SHELL=['/','/index.html','/style.css'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).catch(()=>{}));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy)).catch(()=>{});return r}).catch(()=>caches.match(e.request).then(r=>r||caches.match('/'))))});
-self.addEventListener('push',e=>{let d={};try{d=e.data?e.data.json():{}}catch(_){d={body:e.data?e.data.text():''}};const title=d.title||'Matos – Gestão de Aluguéis';const o={body:d.body||'Você tem uma nova notificação.',tag:d.tag||'matos-alerta',data:{url:d.url||'/'},renotify:true};e.waitUntil(self.registration.showNotification(title,o))});
+messaging.onBackgroundMessage(payload=>{const n=payload.notification||{},d=payload.data||{};self.registration.showNotification(n.title||'Matos – Gestão de Aluguéis',{body:n.body||d.body||'Você tem uma nova notificação.',tag:d.tag||'matos-alerta',data:{url:d.url||'/'},renotify:true})});
 self.addEventListener('notificationclick',e=>{e.notification.close();const url=(e.notification.data&&e.notification.data.url)||'/';e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(cs=>{for(const c of cs){if('focus'in c){c.navigate(url);return c.focus()}}return clients.openWindow?clients.openWindow(url):null}))});
