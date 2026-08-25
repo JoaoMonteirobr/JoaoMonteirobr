@@ -1,4 +1,4 @@
--- Central de alertas e preparação para WhatsApp
+-- Central de alertas operacionais
 create table if not exists public.alertas (
   id uuid primary key default gen_random_uuid(), tipo text not null, titulo text not null, mensagem text not null,
   prioridade text not null default 'media' check (prioridade in ('baixa','media','alta','urgente')),
@@ -8,10 +8,7 @@ create table if not exists public.alertas (
   resolvido_em timestamptz, created_at timestamptz not null default now()
 );
 alter table public.alertas enable row level security;
-alter table public.configuracoes add column if not exists whatsapp_ativo boolean not null default false;
-alter table public.configuracoes add column if not exists whatsapp_numero text;
-alter table public.configuracoes add column if not exists whatsapp_phone_number_id text;
 alter table public.configuracoes add column if not exists aviso_cobranca_dias integer not null default 3;
 alter table public.configuracoes add column if not exists aviso_documento_dias integer not null default 30;
--- A migration aplicada em produção contém as políticas RLS e a função gerar_alertas_operacionais().
--- O envio WhatsApp é feito pela Edge Function whatsapp-send; credenciais Meta devem ficar somente em secrets do Supabase.
+-- As políticas RLS e a função gerar_alertas_operacionais() são mantidas no Supabase.
+-- A Central de Alertas é independente de serviços externos de mensageria.
