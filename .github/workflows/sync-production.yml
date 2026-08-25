@@ -1,0 +1,36 @@
+name: Sincronizar Matos da Vercel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sync-production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Baixar versão de produção
+        run: |
+          curl -fsSL https://gestao-alugueis-jp.vercel.app/ -o index.html
+          curl -fsSL https://gestao-alugueis-jp.vercel.app/style.css -o style.css
+          curl -fsSL https://gestao-alugueis-jp.vercel.app/app1.js -o app1.js
+          curl -fsSL https://gestao-alugueis-jp.vercel.app/app2.js -o app2.js
+          curl -fsSL https://gestao-alugueis-jp.vercel.app/app3.js -o app3.js
+
+      - name: Salvar no GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html style.css app1.js app2.js app3.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Sincronizar Matos Gestão de Aluguéis da produção"
+          git push
