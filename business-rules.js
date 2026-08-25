@@ -14,9 +14,13 @@ forms['Cobranças']=[
  ['outros_encargos','Outros encargos','number'],
  ['valor_pago','Valor pago','number'],
  ['data_pagamento','Data do pagamento','date'],
+ ['forma_pagamento','Forma de pagamento','select:pix|dinheiro|cartao_credito|cartao_debito|transferencia|boleto|outro'],
  ['multa','Multa por atraso','number'],
  ['juros','Juros por atraso','number'],
  ['status','Situação','select:pago|pendente|atrasado'],
+ ['comprovante_path','Comprovante','hidden'],
+ ['comprovante_nome','Nome do comprovante','hidden'],
+ ['comprovante_tipo','Tipo do comprovante','hidden'],
  ['observacoes','Observações','textarea']
 ];
 
@@ -30,14 +34,18 @@ forms['Financeiro']=[
  ['descricao','Descrição'],
  ['entrada','Valor de entrada','number'],
  ['saida','Valor de saída','number'],
+ ['forma_pagamento','Forma de pagamento','select:pix|dinheiro|cartao_credito|cartao_debito|transferencia|boleto|outro'],
  ['pago','Pago/efetivado?','boolean'],
+ ['comprovante_path','Comprovante','hidden'],
+ ['comprovante_nome','Nome do comprovante','hidden'],
+ ['comprovante_tipo','Tipo do comprovante','hidden'],
  ['observacoes','Observações','textarea']
 ];
 
 var oldColumns=window.columnsFor;
 window.columnsFor=function(p){
- if(p==='Cobranças')return [['inquilino_id','Inquilino'],['imovel_id','Imóvel'],['competencia','Mês de referência'],['vencimento','Vencimento'],['aluguel','Aluguel'],['valor_pago','Pago'],['status','Situação']];
- if(p==='Financeiro')return [['data','Data'],['competencia','Mês de referência'],['tipo','Tipo'],['categoria','Categoria'],['descricao','Descrição'],['entrada','Entrada'],['saida','Saída']];
+ if(p==='Cobranças')return [['inquilino_id','Inquilino'],['imovel_id','Imóvel'],['competencia','Mês de referência'],['vencimento','Vencimento'],['aluguel','Aluguel'],['valor_pago','Pago'],['forma_pagamento','Pagamento'],['comprovante_path','Comprovante'],['status','Situação']];
+ if(p==='Financeiro')return [['data','Data'],['competencia','Mês de referência'],['tipo','Tipo'],['categoria','Categoria'],['descricao','Descrição'],['entrada','Entrada'],['saida','Saída'],['forma_pagamento','Pagamento'],['comprovante_path','Comprovante']];
  return oldColumns(p);
 };
 
@@ -53,10 +61,10 @@ var oldModule=window.modulePage;
 window.modulePage=async function(){
  await oldModule();
  if(page==='Cobranças'){
-   var p=E('content');if(p)p.insertAdjacentHTML('afterbegin','<div class="notice" style="margin-bottom:14px"><b>Como lançar uma cobrança:</b> selecione o inquilino ou o imóvel. Se existir contrato ativo correspondente, o sistema faz esse vínculo automaticamente. O campo “Mês de referência” indica a qual mês aquele aluguel pertence.</div>');
+   var p=E('content');if(p)p.insertAdjacentHTML('afterbegin','<div class="notice" style="margin-bottom:14px"><b>Como lançar uma cobrança:</b> selecione o inquilino ou o imóvel. Se existir contrato ativo correspondente, o sistema faz esse vínculo automaticamente. O “Mês de referência” indica a qual mês o aluguel pertence. Forma de pagamento e comprovante são opcionais.</div>');
  }
  if(page==='Financeiro'){
-   var f=E('content');if(f)f.insertAdjacentHTML('afterbegin','<div class="notice" style="margin-bottom:14px"><b>Financeiro:</b> registra o fluxo de dinheiro da gestão — entradas, despesas, repasses ao proprietário, manutenção, impostos, taxas e ajustes. “Data do lançamento” é quando o dinheiro entrou/saiu; “Mês de referência” é o período ao qual esse valor pertence.</div>');
+   var f=E('content');if(f)f.insertAdjacentHTML('afterbegin','<div class="notice" style="margin-bottom:14px"><b>Financeiro:</b> registra o fluxo de dinheiro da gestão — entradas, despesas, repasses ao proprietário, manutenção, impostos, taxas e ajustes. “Data do lançamento” é quando o dinheiro entrou/saiu; “Mês de referência” é o período ao qual esse valor pertence. Você também pode registrar a forma de pagamento e anexar comprovante.</div>');
  }
 };
 
@@ -77,7 +85,10 @@ window.saveForm=async function(p,id){
    inquilino_id:inq,imovel_id:imo,contrato_id:contrato?contrato.id:null,
    competencia:competencia,vencimento:vencimento,
    aluguel:aluguel,outros_encargos:parseBRL(E('f_outros_encargos').value),valor_pago:parseBRL(E('f_valor_pago').value),
-   data_pagamento:E('f_data_pagamento').value||null,multa:0,juros:0,status:E('f_status').value||'pendente',observacoes:E('f_observacoes').value||null
+   data_pagamento:E('f_data_pagamento').value||null,forma_pagamento:E('f_forma_pagamento').value||null,
+   multa:0,juros:0,status:E('f_status').value||'pendente',
+   comprovante_path:E('f_comprovante_path').value||null,comprovante_nome:E('f_comprovante_nome').value||null,comprovante_tipo:E('f_comprovante_tipo').value||null,
+   observacoes:E('f_observacoes').value||null
  };
  var hoje=new Date(),venc=new Date(vencimento+'T23:59:59'),base=obj.aluguel+obj.outros_encargos,pago=obj.valor_pago,atrasado=hoje>venc&&pago<base;
  if(atrasado){var dias=Math.max(1,Math.floor((hoje-venc)/86400000));obj.multa=base*.10;obj.juros=base*.01*(dias/30);if(obj.status!=='pago')obj.status='atrasado'}
