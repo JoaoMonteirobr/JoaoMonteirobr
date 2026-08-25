@@ -1,6 +1,10 @@
 name: Vendor PDF dependencies
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/vendor-pdf.yml'
   workflow_dispatch:
 
 permissions:
