@@ -1,0 +1,1 @@
+window.MATOS_FIREBASE={config:{apiKey:'AIzaSyBZpcSyibLfX_AJDxfsAz7VJid_Cjrvlnw',authDomain:'matos-gestao-de-alugeis.firebaseapp.com',projectId:'matos-gestao-de-alugeis',storageBucket:'matos-gestao-de-alugeis.firebasestorage.app',messagingSenderId:'106797791955',appId:'1:106797791955:web:62f7a01f93bd8383fd7226',measurementId:'G-XK3NCD25B8'},vapidKey:''};
