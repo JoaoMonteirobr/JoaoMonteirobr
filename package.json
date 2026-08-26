@@ -1,0 +1,29 @@
+{
+  "name": "matos-gestao-alugueis",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "arch:check": "node scripts/check-architecture.mjs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "knip": "knip",
+    "mutation": "stryker run",
+    "quality": "npm run lint && npm run arch:check && npm run test:coverage && npm run knip"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "@commitlint/cli": "latest",
+    "@commitlint/config-conventional": "latest",
+    "@playwright/test": "latest",
+    "@stryker-mutator/core": "latest",
+    "@stryker-mutator/vitest-runner": "latest",
+    "@vitest/coverage-v8": "latest",
+    "jsdom": "latest",
+    "knip": "latest",
+    "vitest": "latest"
+  }
+}
