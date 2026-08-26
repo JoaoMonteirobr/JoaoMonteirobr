@@ -4,12 +4,10 @@ var ROUTE_KEY='matos_current_page';
 var SESSION_START_KEY='matos_session_started_at';
 var SESSION_LIMIT_MS=20*60*1000;
 var bellPoll=null,timerTick=null,documentBound=false;
-function allowedMenus(){return currentRole==='admin'?adminMenus:(currentRole==='proprietario'?ownerMenus:tenantMenus)}
-function validPage(p){return p&&allowedMenus().indexOf(p)>=0}
 function routeFromUrl(){try{return new URLSearchParams(location.search).get('pagina')||''}catch(e){return ''}}
 function storedPage(){try{return sessionStorage.getItem(ROUTE_KEY)||''}catch(e){return ''}}
 function rememberPage(){try{if(page)sessionStorage.setItem(ROUTE_KEY,page)}catch(e){}}
-var incoming=routeFromUrl();if(incoming){try{sessionStorage.setItem(ROUTE_KEY,incoming);history.replaceState(null,'',location.pathname+location.hash)}catch(e){}}else{var saved=storedPage();if(saved)page=saved}
+var incoming=routeFromUrl();if(incoming){page=incoming;try{sessionStorage.setItem(ROUTE_KEY,incoming);history.replaceState(null,'',location.pathname+location.hash)}catch(e){}}else{var saved=storedPage();if(saved)page=saved}
 function categoryLabel(t){var m={login:'Login',cobranca_atrasada:'Aluguel em atraso',cobranca_vencendo:'Conta a vencer',contrato_vencendo:'Contrato a vencer',contrato_vencido:'Contrato vencido',documento_vencendo:'Documento a vencer'};return m[t]||'Alerta'}
 function bellMarkup(){return '<div class="notify-wrap" id="notify_wrap"><button class="notify-bell" id="notify_bell" type="button" aria-label="Notificações" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span class="notify-count" id="notify_count" hidden>0</span></button><div class="notify-panel" id="notify_panel" hidden><div class="notify-head"><strong>Notificações</strong><button type="button" id="notify_all">Ver todas</button></div><div class="notify-list" id="notify_list"><div class="notify-empty">Carregando notificações...</div></div></div></div>'}
 function timerMarkup(){return '<div class="session-timer" id="session_timer" title="Tempo restante desta sessão"><span class="session-timer-icon"></span><div><small>Sessão restante</small><strong id="session_clock">20:00</strong></div></div>'}
@@ -27,7 +25,7 @@ function updateSessionClock(){if(!session||!session.access_token||currentRole===
 function startSessionTimer(){if(currentRole==='admin'){localStorage.removeItem(SESSION_START_KEY);return}sessionStart();if(timerTick)clearInterval(timerTick);updateSessionClock();timerTick=setInterval(updateSessionClock,1000)}
 function stopSessionTimer(){if(timerTick){clearInterval(timerTick);timerTick=null}if(currentRole==='admin')localStorage.removeItem(SESSION_START_KEY)}
 var originalSaveSession=saveSession;saveSession=function(s){if(s&&s.access_token){localStorage.setItem(SESSION_START_KEY,String(Date.now()))}else{localStorage.removeItem(SESSION_START_KEY)}return originalSaveSession(s)};window.saveSession=saveSession;
-var originalShell=shell;shell=function(){var savedPage=storedPage();if(validPage(savedPage))page=savedPage;originalShell();rememberPage();Array.prototype.forEach.call(document.querySelectorAll('[data-page]'),function(b){b.addEventListener('click',function(){var p=b.getAttribute('data-page');if(p){page=p;rememberPage()}})});injectHeaderTools()};window.shell=shell;
+var originalShell=shell;shell=function(){originalShell();rememberPage();Array.prototype.forEach.call(document.querySelectorAll('[data-page]'),function(b){b.addEventListener('click',function(){var p=b.getAttribute('data-page');if(p){page=p;rememberPage()}})});injectHeaderTools()};window.shell=shell;
 var originalGoQuick=window.goQuick;window.goQuick=function(p){page=p;rememberPage();return originalGoQuick(p)};
 window.addEventListener('beforeunload',rememberPage);
 })();
