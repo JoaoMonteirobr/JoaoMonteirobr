@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "biome check .",
-    "format": "biome format --write .",
+    "lint": "biome lint observability.js scripts tests vitest.config.js playwright.config.js stryker.config.mjs commitlint.config.mjs",
+    "format": "biome format --write observability.js scripts tests *.config.js *.config.mjs",
     "arch:check": "node scripts/check-architecture.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "knip": "knip",
+    "knip": "knip --include dependencies,unlisted",
     "mutation": "stryker run",
     "quality": "npm run lint && npm run arch:check && npm run test:coverage && npm run knip"
   },
