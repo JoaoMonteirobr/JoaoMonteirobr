@@ -58,11 +58,37 @@ Quando o PR apenas contribuir para a tarefa sem encerrá-la, usar:
 - Produção deve acompanhar a branch `main`.
 - Evitar deploy funcional direto em produção fora do fluxo de PR.
 
-### 6. Merge somente após validação
+### 6. Gates obrigatórios de qualidade
+O repositório possui uma esteira automatizada e agentes futuros devem preservá-la.
+
+Antes do merge, sempre que aplicável, executar e/ou aguardar no GitHub Actions:
+- **Biome** para lint e consistência do código novo/modernizado;
+- **Arch Contract** (`npm run arch:check`) para invariantes arquiteturais e proteção contra secrets versionados;
+- **Vitest** para testes unitários e de integração;
+- **Codecov** para relatório de cobertura;
+- **Knip** para dependências/unlisted desnecessários;
+- **Playwright** para testes end-to-end em desktop e mobile;
+- **Commitlint** para mensagens de commit convencionais;
+- **Stryker** para mutation testing em mudanças de lógica crítica ou quando explicitamente necessário.
+
+Não remover ou enfraquecer esses gates apenas para fazer um PR passar. Quando um gate acusar falso positivo no código legado, ajustar o escopo/configuração de forma documentada, preservando a capacidade de detectar regressões no código novo.
+
+### 7. Observabilidade
+A aplicação deve manter uma camada vendor-neutral de observabilidade baseada em conceitos OpenTelemetry/OTLP e adaptadores opcionais para Sentry, Datadog e New Relic.
+
+Regras:
+- nenhuma integração comercial deve ser ativada sem configuração explícita;
+- DSNs, client tokens, license keys, API keys e headers OTLP sensíveis devem ficar somente em secrets/variáveis de ambiente;
+- erros globais e rejeições não tratadas devem permanecer observáveis;
+- dados sensíveis devem ser redigidos antes de qualquer envio de telemetria;
+- instrumentação não deve impedir o carregamento da aplicação se o provedor estiver indisponível.
+
+### 8. Merge somente após validação
 Antes do merge, confirmar:
 - critérios de aceite atendidos;
 - ausência de regressões conhecidas;
 - Preview Deploy validado quando aplicável;
+- checks de qualidade/testes relevantes aprovados;
 - PR referenciando a Issue correta.
 
 Após o merge:
@@ -87,4 +113,5 @@ Nunca armazenar no repositório:
 - tokens administrativos;
 - senhas;
 - secrets da Vercel/Supabase/Firebase;
-- chaves privadas.
+- chaves privadas;
+- DSN/token/licença privada de Sentry, Datadog, New Relic, Codecov ou OpenTelemetry Collector.
