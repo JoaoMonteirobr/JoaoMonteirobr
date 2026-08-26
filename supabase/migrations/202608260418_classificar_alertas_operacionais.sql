@@ -1,0 +1,9 @@
+-- Issue #18: classificação contextual da Central de Alertas.
+-- A versão aplicada em produção substitui public.gerar_alertas_operacionais para:
+-- 1. encerrar automaticamente alertas de cobranças pagas e contratos inativos;
+-- 2. classificar cobrança atrasada como urgente;
+-- 3. criar categoria própria para conta próxima do vencimento;
+-- 4. criar alertas distintos para contrato próximo do vencimento e contrato vencido;
+-- 5. manter documentos próximos do vencimento como categoria separada.
+--
+-- Migração aplicada pelo Supabase MCP: classificar_alertas_operacionais.
