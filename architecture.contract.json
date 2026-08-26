@@ -5,7 +5,8 @@
     "observability.js",
     "motion-system.js",
     "firebase-config.js",
-    "charge-pdf-safe.js"
+    "charge-pdf-safe.js",
+    "tenant-portal.js"
   ],
   "forbiddenPatterns": [
     "FIREBASE_SERVICE_ACCOUNT_JSON",
@@ -15,12 +16,15 @@
   "protectedModules": [
     "firebase-config.js",
     "charge-pdf-safe.js",
-    "alerts.js"
+    "alerts.js",
+    "tenant-portal.js"
   ],
   "rules": [
     "Frontend estático deve continuar inicializável sem bundler em produção.",
     "Secrets nunca podem ser versionados.",
     "Integrações de observabilidade externas devem ser opt-in.",
+    "O perfil inquilino deve receber somente dados vinculados ao próprio inquilino e nunca indicadores administrativos globais.",
+    "Solicitações de manutenção do inquilino devem ser criadas como abertas, sem custos ou prioridade administrativa definidos pelo usuário.",
     "Alterações funcionais devem seguir Issue -> branch -> PR -> validação -> merge."
   ]
 }
