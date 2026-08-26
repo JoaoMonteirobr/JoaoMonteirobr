@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["app1.js", "app2.js", "app3.js", "observability.js", "motion-system.js", "tests/**/*.js"],
+  "project": ["*.js", "scripts/**/*.mjs", "tests/**/*.js"],
+  "ignore": ["vendor/**", "firebase-messaging-sw.js", "sw.js"],
+  "ignoreDependencies": ["@commitlint/cli", "@commitlint/config-conventional", "@playwright/test", "@stryker-mutator/core", "@stryker-mutator/vitest-runner", "@vitest/coverage-v8", "@biomejs/biome"]
+}
