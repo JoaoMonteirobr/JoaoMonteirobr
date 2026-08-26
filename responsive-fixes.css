@@ -1,0 +1,83 @@
+/* Correções de responsividade para modais e formulários — Matos */
+.modalback{
+  position:fixed!important;
+  inset:0!important;
+  z-index:1000!important;
+  width:100vw!important;
+  height:100dvh!important;
+  padding:24px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+  background:rgba(3,24,48,.58)!important;
+  backdrop-filter:blur(3px);
+}
+.modalback>.modal{
+  position:relative!important;
+  width:min(820px,calc(100vw - 48px))!important;
+  max-width:820px!important;
+  max-height:calc(100dvh - 48px)!important;
+  margin:0!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  background:#fff!important;
+  border-radius:18px!important;
+  box-shadow:0 28px 80px rgba(0,26,56,.30)!important;
+  overscroll-behavior:contain;
+}
+.modalback .modalhead{
+  position:sticky!important;
+  top:0!important;
+  z-index:5!important;
+  background:#fff!important;
+  padding-top:2px;
+  border-bottom:1px solid #e3ebf4;
+}
+.modalback .modalhead .x{
+  flex:0 0 auto;
+}
+.modalback .formgrid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:4px 16px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.modalback .formgrid .field{min-width:0!important}
+.modalback .formgrid .field.full{grid-column:1/-1!important}
+.modalback .inp,
+.modalback input,
+.modalback select,
+.modalback textarea{
+  max-width:100%!important;
+  min-width:0!important;
+}
+.modalback textarea{resize:vertical}
+.modalback .actions{
+  position:sticky;
+  bottom:0;
+  z-index:4;
+  padding:12px 0 4px;
+  background:linear-gradient(to bottom,rgba(255,255,255,.78),#fff 24%);
+}
+@media (max-width:700px){
+  .modalback{
+    padding:10px!important;
+    align-items:flex-end!important;
+  }
+  .modalback>.modal{
+    width:100%!important;
+    max-width:none!important;
+    max-height:calc(100dvh - 20px)!important;
+    border-radius:18px 18px 12px 12px!important;
+  }
+  .modalback .formgrid{
+    grid-template-columns:1fr!important;
+    gap:0!important;
+  }
+  .modalback .formgrid .field.full{grid-column:auto!important}
+}
+@media (min-width:701px) and (max-width:1100px){
+  .modalback>.modal{width:min(760px,calc(100vw - 36px))!important}
+}
