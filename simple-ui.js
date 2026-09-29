@@ -12,7 +12,7 @@ tables.Pagamentos='cobrancas'; tables.Chamados='manutencoes'; tables.Cadastros='
 function isoMonth(d){return (d||new Date().toISOString()).slice(0,7)}
 function monthStart(k){return k+'-01'}
 function monthEnd(k){var p=k.split('-');return new Date(Number(p[0]),Number(p[1]),0).toISOString().slice(0,10)}
-function activeInMonth(c,k){var a=monthStart(k),b=monthEnd(k);return c.status!=='encerrado'&&(!c.data_inicio||c.data_inicio<=b)&&(!c.data_fim||c.data_fim>=a)}
+function activeInMonth(c,k){var a=monthStart(k),b=monthEnd(k),ini=String(c.data_inicio||'').slice(0,10),fim=String(c.data_fim||'').slice(0,10),status=String(c.status||'').toLowerCase();/* As datas do contrato são a fonte principal para a competência. Um status encerrado não deve apagar meses em que o contrato esteve vigente. */if(ini&&ini>b)return false;if(fim&&fim<a)return false;if(!ini&&!fim&&status==='encerrado')return false;return true}
 function dueDate(c,k){var day=Math.max(1,Math.min(28,Number(c.dia_vencimento||10)));return k+'-'+String(day).padStart(2,'0')}
 function paymentFor(contractId,k,charges){return (charges||[]).find(function(x){return x.contrato_id===contractId&&String(x.competencia||x.vencimento||'').slice(0,7)===k})||null}
 function expected(c){return Number(c.aluguel_atual||0)}
