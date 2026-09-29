@@ -106,7 +106,5 @@ load=async function(){
   return originalLoad.apply(this,arguments)
  }catch(e){C.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}
 };window.load=load;
-var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Cadastros':'＋','Contratos':'▤','Pagamentos':'return m[x]||oldIcon(x)};window.navIcon=navIcon;
-})();
-,'IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
+var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Cadastros':'＋','Contratos':'▤','Pagamentos':'$','IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
 })();
