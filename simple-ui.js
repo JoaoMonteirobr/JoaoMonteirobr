@@ -1,10 +1,14 @@
 (function(){
 'use strict';
-var adminMain=['Dashboard','Pagamentos','IPTU','Chamados','Relatórios','Configurações'];
+
+// Define os menus visíveis para cada perfil de usuário.
+var adminMain=['Dashboard','Cadastros','Contratos','Pagamentos','IPTU','Chamados','Relatórios','Configurações'];
 var ownerMain=['Dashboard','Pagamentos','IPTU','Chamados','Relatórios'];
 var tenantMain=['Dashboard','Pagamentos','IPTU','Chamados'];
 adminMenus=adminMain; ownerMenus=ownerMain; tenantMenus=tenantMain;
-tables.Pagamentos='cobrancas'; tables.Chamados='manutencoes';
+// Liga cada tela simplificada à tabela correspondente no banco.
+tables.Pagamentos='cobrancas'; tables.Chamados='manutencoes'; tables.Cadastros='imoveis';
+// Funções auxiliares para competência mensal, vencimentos e contratos ativos.
 function isoMonth(d){return (d||new Date().toISOString()).slice(0,7)}
 function monthStart(k){return k+'-01'}
 function monthEnd(k){var p=k.split('-');return new Date(Number(p[0]),Number(p[1]),0).toISOString().slice(0,10)}
@@ -12,6 +16,7 @@ function activeInMonth(c,k){var a=monthStart(k),b=monthEnd(k);return c.status!==
 function dueDate(c,k){var day=Math.max(1,Math.min(28,Number(c.dia_vencimento||10)));return k+'-'+String(day).padStart(2,'0')}
 function paymentFor(contractId,k,charges){return (charges||[]).find(function(x){return x.contrato_id===contractId&&String(x.competencia||x.vencimento||'').slice(0,7)===k})||null}
 function expected(c){return Number(c.aluguel_atual||0)}
+// Monta o resumo mensal: contrato + imóvel + inquilino + pagamento.
 function buildLedger(contracts,charges,ims,inqs,k){
  return contracts.filter(function(c){return activeInMonth(c,k)}).map(function(c){
   var pay=paymentFor(c.id,k,charges),im=ims.find(function(x){return x.id===c.imovel_id}),inq=inqs.find(function(x){return x.id===c.inquilino_id}),prev=expected(c),paid=Number(pay&&pay.valor_pago||0);
@@ -27,12 +32,14 @@ async function ledgerData(k){await Promise.all(['contratos','cobrancas','imoveis
 function paymentRows(rows,actions){
  return rows.map(function(r){return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+'</td><td>'+st(r.status)+'</td>'+(actions?'<td><button class="row-primary" data-pay="'+r.contract.id+'">'+(r.status==='pago'?'Editar':'Informar pagamento')+'</button></td>':'')+'</tr>'}).join('')
 }
+// Exibe os aluguéis previstos, pagos e pendentes do mês selecionado.
 async function paymentsPage(){
  var k=window._simpleMonth||isoMonth(),rows=await ledgerData(k);window._simpleMonth=k;
  E('content').innerHTML='<div class="simple-toolbar"><div><h2>Pagamentos</h2><p>Informe somente o que foi recebido. O restante é considerado pendente automaticamente.</p></div>'+monthPicker('paymentMonth',k)+'</div>'+summaryCards(rows)+'<div class="panel simple-panel"><div class="panel-title"><h3>Aluguéis da competência</h3><span class="muted">'+rows.length+' contratos</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th>'+(currentRole==='admin'?'<th>Ação</th>':'')+'</tr></thead><tbody>'+(paymentRows(rows,currentRole==='admin')||'<tr><td colspan="7" class="empty">Nenhum contrato ativo nesta competência.</td></tr>')+'</tbody></table></div></div>';
  E('paymentMonth').onchange=function(){window._simpleMonth=this.value;paymentsPage()};
  Array.prototype.forEach.call(document.querySelectorAll('[data-pay]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.contract.id===b.dataset.pay});openPayment(r,k)}})
 }
+// Abre o formulário usado pelo administrador para registrar um pagamento.
 function openPayment(r,k){
  if(currentRole!=='admin')return;
  var old=r.charge||{},today=new Date().toISOString().slice(0,10);
@@ -40,11 +47,57 @@ function openPayment(r,k){
  E('closemodal').onclick=E('cancelmodal').onclick=function(){E('modal').remove()};
  E('savepay').onclick=async function(){var v=Number(E('pay_value').value||0),msg=E('formmsg');if(v<=0){msg.innerHTML='<div class="notice err">Informe um valor recebido válido.</div>';return}var obj={contrato_id:r.contract.id,competencia:k+'-01',vencimento:r.due,aluguel:r.expected,outros_encargos:Number(old.outros_encargos||0),valor_pago:v,data_pagamento:E('pay_date').value,status:v>=r.expected?'pago':'pendente',observacoes:E('pay_note').value||null};msg.innerHTML='<div class="notice">Salvando pagamento...</div>';try{if(old.id)await dbUpdate('cobrancas',old.id,obj);else await dbInsert('cobrancas',obj);cache.cobrancas=null;E('modal').remove();paymentsPage()}catch(e){msg.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}}
 }
-async function simpleDash(){
- var k=window._simpleMonth||isoMonth(),rows=await ledgerData(k),maint=await dbGet('manutencoes'),open=(maint||[]).filter(function(x){return ['concluido','cancelado'].indexOf(x.status)<0}).length;window._simpleMonth=k;
- E('content').innerHTML='<div class="simple-toolbar"><div><h2>Visão geral</h2><p>Acompanhe recebimentos, pendências e operação em um único lugar.</p></div>'+monthPicker('dashMonth',k)+'</div>'+summaryCards(rows)+'<div class="simple-grid"><div class="panel simple-panel"><div class="panel-title"><h3>Pendências que precisam de atenção</h3><button class="linkmini" onclick="goQuick(\'Pagamentos\')">Ver pagamentos →</button></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Pendente</th></tr></thead><tbody>'+rows.filter(function(r){return r.status==='pendente'}).slice(0,8).map(function(r){return '<tr><td>'+esc(r.tenant&&r.tenant.nome||'—')+'</td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td><b>'+money(r.pending)+'</b></td></tr>'}).join('')+'</tbody></table></div></div><div class="panel simple-panel action-panel"><h3>Operação</h3><button onclick="goQuick(\'Pagamentos\')"><b>Informar pagamento</b><span>Registrar recebimento de aluguel</span></button><button onclick="goQuick(\'IPTU\')"><b>IPTU</b><span>Valores e referências anuais</span></button><button onclick="goQuick(\'Chamados\')"><b>Chamados <em>'+open+'</em></b><span>Acompanhar solicitações dos inquilinos</span></button><button onclick="goQuick(\'Relatórios\')"><b>Relatório mensal</b><span>Pagos e pendentes para cobrança</span></button></div></div>';
- E('dashMonth').onchange=function(){window._simpleMonth=this.value;simpleDash()}
+// Calcula quantos dias faltam até uma data, usado nos avisos de contrato.
+function daysUntil(v){if(!v)return 99999;var t=new Date(String(v).slice(0,10)+'T12:00:00'),n=new Date();n.setHours(12,0,0,0);return Math.ceil((t-n)/86400000)}
+// =====================================================
+// CADASTRO DE IMÓVEIS E INQUILINOS
+// =====================================================
+// Lista imóveis e mostra o inquilino vinculado quando o imóvel está ocupado.
+async function cadastrosPage(){
+ await Promise.all([dbGet('imoveis'),dbGet('inquilinos')]);
+ var ims=cache.imoveis||[],inqs=cache.inquilinos||[];
+ var rows=ims.map(function(im){var t=inqs.find(function(x){return x.id===im.inquilino_id});return '<tr><td><b>'+esc(im.nome||im.endereco||'Imóvel')+'</b><div class="muted">'+esc([im.endereco,im.numero,im.bairro].filter(Boolean).join(', '))+'</div></td><td>'+money(im.aluguel_base)+'</td><td>'+st(im.status==='vago'?'desocupado':im.status)+'</td><td>'+esc(t&&t.nome||'—')+'</td></tr>'}).join('');
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Cadastros</h2><p>Cadastre o imóvel e, quando estiver ocupado, os dados do inquilino no mesmo fluxo.</p></div><button id="newProperty" class="btn primary">+ Cadastrar imóvel</button></div><div class="panel simple-panel"><div class="panel-title"><h3>Imóveis cadastrados</h3><span class="muted">'+ims.length+' imóveis</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Imóvel / endereço</th><th>Aluguel</th><th>Situação</th><th>Inquilino</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" class="empty">Nenhum imóvel cadastrado.</td></tr>')+'</tbody></table></div></div>';
+ E('newProperty').onclick=openPropertyRegistration
 }
+// Abre o cadastro integrado: imóvel e, se ocupado, dados obrigatórios do inquilino.
+function openPropertyRegistration(){
+ document.body.insertAdjacentHTML('beforeend','<div class="modalbg" id="modal"><div class="modal simple-modal"><div class="modalhead"><div><h2>Novo imóvel</h2><small>Cadastro essencial do imóvel</small></div><button id="closemodal" class="close">×</button></div><div class="modalbody"><div id="formmsg"></div><div class="formgrid"><div class="field full"><span class="lbl">Endereço *</span><input id="reg_address" class="inp" placeholder="Rua, avenida..."></div><div class="field"><span class="lbl">Número</span><input id="reg_number" class="inp"></div><div class="field"><span class="lbl">Bairro</span><input id="reg_neighborhood" class="inp"></div><div class="field"><span class="lbl">Valor do aluguel *</span><input id="reg_rent" class="inp" type="number" min="0" step="0.01"></div><div class="field"><span class="lbl">Situação *</span><select id="reg_status" class="inp"><option value="vago">Desocupado</option><option value="ocupado">Ocupado</option></select></div></div><div id="tenantBlock" class="tenant-register" style="display:none"><div class="section-label">Dados do inquilino</div><div class="formgrid"><div class="field"><span class="lbl">Tipo de pessoa *</span><select id="reg_person" class="inp"><option value="pf">Pessoa Física</option><option value="pj">Pessoa Jurídica</option></select></div><div class="field"><span class="lbl">Nome / Razão social *</span><input id="reg_tenant_name" class="inp"></div><div class="field"><span id="reg_doc_label" class="lbl">CPF *</span><input id="reg_doc" class="inp" inputmode="numeric"></div><div class="field"><span class="lbl">Telefone para contato *</span><input id="reg_phone" class="inp" type="tel" placeholder="(68) 99999-9999"></div></div></div></div><div class="modalfoot"><button id="cancelmodal" class="btn secondary">Cancelar</button><button id="saveProperty" class="btn primary">Salvar cadastro</button></div></div></div>');
+ function close(){E('modal').remove()} E('closemodal').onclick=E('cancelmodal').onclick=close;
+ E('reg_status').onchange=function(){E('tenantBlock').style.display=this.value==='ocupado'?'block':'none'};
+ E('reg_person').onchange=function(){E('reg_doc_label').textContent=this.value==='pj'?'CNPJ *':'CPF *';E('reg_doc').value=''};
+ E('reg_phone').oninput=function(){if(window.phoneBR)this.value=phoneBR(this.value)};
+ E('reg_doc').oninput=function(){var m=window.MatosTenantIdentity;if(!m)return;this.value=E('reg_person').value==='pj'?m.maskCnpj(this.value):m.maskCpf(this.value)};
+ E('saveProperty').onclick=async function(){var msg=E('formmsg'),occupied=E('reg_status').value==='ocupado',address=E('reg_address').value.trim(),rent=Number(E('reg_rent').value||0);if(!address||rent<=0){msg.innerHTML='<div class="notice err">Informe o endereço e um valor de aluguel válido.</div>';return}var tenantId=null;if(occupied){var name=E('reg_tenant_name').value.trim(),doc=E('reg_doc').value.trim(),phone=E('reg_phone').value.trim();if(!name||!doc||!phone){msg.innerHTML='<div class="notice err">Para imóvel ocupado, preencha tipo de pessoa, nome, CPF/CNPJ e telefone.</div>';return}var validator=window.MatosTenantIdentity;if(validator){var valid=E('reg_person').value==='pj'?validator.cnpjValid(doc):validator.cpfValid(doc);if(!valid){msg.innerHTML='<div class="notice err">'+(E('reg_person').value==='pj'?'CNPJ':'CPF')+' inválido.</div>';return}}try{msg.innerHTML='<div class="notice">Salvando inquilino e imóvel...</div>';var ti=await dbInsert('inquilinos',{nome:name,cpf_cnpj:doc,telefone:phone,status:'ativo'});tenantId=ti&&ti[0]&&ti[0].id}catch(e){msg.innerHTML='<div class="notice err">'+esc(e.message)+'</div>';return}}try{var number=E('reg_number').value.trim(),neigh=E('reg_neighborhood').value.trim();await dbInsert('imoveis',{nome:address+(number?' '+number:''),endereco:address,numero:number||null,bairro:neigh||null,cidade:'Rio Branco',aluguel_base:rent,iptu_mensal:0,condominio:0,status:occupied?'ocupado':'vago',inquilino_id:tenantId});cache.imoveis=null;cache.inquilinos=null;close();cadastrosPage()}catch(e){msg.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}}
+}
+// =====================================================
+// CONTRATOS E PRAZOS
+// =====================================================
+// Lista contratos e destaca os que vencem em até 60 dias.
+async function contractsPage(){
+ await Promise.all([dbGet('contratos'),dbGet('imoveis'),dbGet('inquilinos')]);var cs=cache.contratos||[],ims=cache.imoveis||[],inqs=cache.inquilinos||[];
+ var rows=cs.map(function(c){var im=ims.find(function(x){return x.id===c.imovel_id}),t=inqs.find(function(x){return x.id===c.inquilino_id}),d=daysUntil(c.data_fim),badge=d<0?'<span class="badge red">Vencido</span>':d<=60?'<span class="badge yellow">'+d+' dias</span>':st(c.status);return '<tr><td><b>'+esc(im&&im.nome||'—')+'</b></td><td>'+esc(t&&t.nome||'—')+'</td><td>'+dateBR(c.data_inicio)+'</td><td>'+dateBR(c.data_fim)+'</td><td>'+money(c.aluguel_atual)+'</td><td>'+badge+'</td></tr>'}).join('');
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Contratos</h2><p>Cadastre e acompanhe os prazos dos contratos vinculados aos imóveis.</p></div><button id="newContract" class="btn primary">+ Novo contrato</button></div><div class="notice contract-notice">O sistema gera aviso automático quando faltarem <b>60 dias</b> para o término de um contrato ativo.</div><div class="panel simple-panel"><div class="tablewrap"><table class="table"><thead><tr><th>Imóvel</th><th>Inquilino</th><th>Início</th><th>Término</th><th>Aluguel</th><th>Situação / prazo</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="empty">Nenhum contrato cadastrado.</td></tr>')+'</tbody></table></div></div>';
+ E('newContract').onclick=function(){openContractRegistration(ims,inqs)}
+}
+// Cria um contrato usando o imóvel ocupado e seu inquilino já vinculado.
+function openContractRegistration(ims,inqs){
+ var occupied=ims.filter(function(x){return x.inquilino_id});
+ document.body.insertAdjacentHTML('beforeend','<div class="modalbg" id="modal"><div class="modal simple-modal"><div class="modalhead"><div><h2>Novo contrato</h2><small>Vincule o contrato a um imóvel ocupado</small></div><button id="closemodal" class="close">×</button></div><div class="modalbody"><div id="formmsg"></div><div class="formgrid"><div class="field full"><span class="lbl">Imóvel *</span><select id="ct_property" class="inp"><option value="">Selecione</option>'+occupied.map(function(im){return '<option value="'+im.id+'">'+esc(im.nome||im.endereco)+'</option>'}).join('')+'</select></div><div class="field full"><span class="lbl">Inquilino</span><input id="ct_tenant" class="inp" disabled placeholder="Selecionado pelo imóvel"></div><div class="field"><span class="lbl">Início do contrato *</span><input id="ct_start" class="inp" type="date"></div><div class="field"><span class="lbl">Término do contrato *</span><input id="ct_end" class="inp" type="date"></div><div class="field"><span class="lbl">Dia do vencimento *</span><input id="ct_due" class="inp" type="number" min="1" max="28" value="10"></div><div class="field"><span class="lbl">Valor do aluguel *</span><input id="ct_rent" class="inp" type="number" min="0" step="0.01"></div></div></div><div class="modalfoot"><button id="cancelmodal" class="btn secondary">Cancelar</button><button id="saveContract" class="btn primary">Salvar contrato</button></div></div></div>');
+ function close(){E('modal').remove()}E('closemodal').onclick=E('cancelmodal').onclick=close;
+ E('ct_property').onchange=function(){var im=ims.find(function(x){return x.id===E('ct_property').value}),t=im&&inqs.find(function(x){return x.id===im.inquilino_id});E('ct_tenant').value=t&&t.nome||'';E('ct_rent').value=im&&im.aluguel_base||''};
+ E('saveContract').onclick=async function(){var msg=E('formmsg'),im=ims.find(function(x){return x.id===E('ct_property').value}),start=E('ct_start').value,end=E('ct_end').value,rent=Number(E('ct_rent').value||0),due=Number(E('ct_due').value||0);if(!im||!im.inquilino_id||!start||!end||rent<=0||due<1||due>28){msg.innerHTML='<div class="notice err">Preencha imóvel, datas, vencimento e valor do aluguel.</div>';return}if(end<=start){msg.innerHTML='<div class="notice err">A data de término deve ser posterior à data de início.</div>';return}try{msg.innerHTML='<div class="notice">Salvando contrato...</div>';await dbInsert('contratos',{imovel_id:im.id,inquilino_id:im.inquilino_id,data_inicio:start,data_fim:end,dia_vencimento:due,aluguel_atual:rent,status:start>new Date().toISOString().slice(0,10)?'futuro':'ativo'});cache.contratos=null;close();contractsPage()}catch(e){msg.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}}
+}
+// =====================================================
+// DASHBOARD
+// =====================================================
+// Resume pagamentos, pendências, chamados e contratos próximos do término.
+async function simpleDash(){
+ var k=window._simpleMonth||isoMonth(),rows=await ledgerData(k),maint=await dbGet('manutencoes'),open=(maint||[]).filter(function(x){return ['concluido','cancelado'].indexOf(x.status)<0}).length,contracts=cache.contratos||[],ims=cache.imoveis||[],inqs=cache.inquilinos||[],ending=contracts.filter(function(x){var d=daysUntil(x.data_fim);return x.status==='ativo'&&d>=0&&d<=60}).sort(function(a,b){return String(a.data_fim).localeCompare(String(b.data_fim))});window._simpleMonth=k;
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Visão geral</h2><p>Acompanhe recebimentos, pendências e operação em um único lugar.</p></div>'+monthPicker('dashMonth',k)+'</div>'+summaryCards(rows)+'<div class="simple-grid"><div class="panel simple-panel"><div class="panel-title"><h3>Pendências que precisam de atenção</h3><button class="linkmini" onclick="goQuick(\'Pagamentos\')">Ver pagamentos →</button></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Pendente</th></tr></thead><tbody>'+rows.filter(function(r){return r.status==='pendente'}).slice(0,8).map(function(r){return '<tr><td>'+esc(r.tenant&&r.tenant.nome||'—')+'</td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td><b>'+money(r.pending)+'</b></td></tr>'}).join('')+'</tbody></table></div></div><div class="panel simple-panel action-panel"><h3>Operação</h3><button onclick="goQuick(\'Pagamentos\')"><b>Informar pagamento</b><span>Registrar recebimento de aluguel</span></button><button onclick="goQuick(\'IPTU\')"><b>IPTU</b><span>Valores e referências anuais</span></button><button onclick="goQuick(\'Chamados\')"><b>Chamados <em>'+open+'</em></b><span>Acompanhar solicitações dos inquilinos</span></button><button onclick="goQuick(\'Relatórios\')"><b>Relatório mensal</b><span>Pagos e pendentes para cobrança</span></button></div></div>';
+ E('content').insertAdjacentHTML('beforeend','<div class="panel simple-panel contract-dashboard"><div class="panel-title"><h3>Contratos próximos do término</h3><button class="linkmini" onclick="goQuick(\'Contratos\')">Ver contratos →</button></div><p class="muted">Avisos exibidos com 60 dias de antecedência.</p><div class="tablewrap"><table class="table"><thead><tr><th>Imóvel</th><th>Inquilino</th><th>Término</th><th>Prazo</th></tr></thead><tbody>'+(ending.map(function(ct){var im=ims.find(function(x){return x.id===ct.imovel_id}),t=inqs.find(function(x){return x.id===ct.inquilino_id}),d=daysUntil(ct.data_fim);return '<tr><td>'+esc(im&&im.nome||'—')+'</td><td>'+esc(t&&t.nome||'—')+'</td><td><b>'+dateBR(ct.data_fim)+'</b></td><td><span class="badge yellow">'+d+' dias</span></td></tr>'}).join('')||'<tr><td colspan="4" class="empty">Nenhum contrato termina nos próximos 60 dias.</td></tr>')+'</tbody></table></div></div>');E('dashMonth').onchange=function(){window._simpleMonth=this.value;simpleDash()}
+}
+// Exibe os chamados de manutenção e solicitações dos inquilinos.
 async function callsPage(){
  var rows=await dbGet('manutencoes');if(!cache.imoveis)await dbGet('imoveis');if(!cache.inquilinos)await dbGet('inquilinos');
  var body=rows.map(function(r){var im=(cache.imoveis||[]).find(function(x){return x.id===r.imovel_id}),ten=(cache.inquilinos||[]).find(function(x){return x.id===r.inquilino_id});return '<tr><td>'+dateBR(r.data_abertura)+'</td><td>'+esc(ten&&ten.nome||'—')+'</td><td>'+esc(im&&im.nome||'—')+'</td><td>'+esc(r.categoria||'—')+'</td><td>'+esc(r.descricao||'—')+'</td><td>'+st(r.status||'aberto')+'</td>'+(currentRole==='admin'?'<td><button class="row-primary" data-call="'+r.id+'">Abrir</button></td>':'')+'</tr>'}).join('');
@@ -52,21 +105,26 @@ async function callsPage(){
  if(E('newcall'))E('newcall').onclick=function(){openForm('Manutenção',null)};
  Array.prototype.forEach.call(document.querySelectorAll('[data-call]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.id===b.dataset.call});openForm('Manutenção',r)}})
 }
+// Gera a visão mensal de pagos e pendentes, pronta para impressão/PDF.
 async function simpleReports(){
  var k=window._simpleReportMonth||isoMonth(),rows=await ledgerData(k);window._simpleReportMonth=k;var paid=rows.filter(function(r){return r.status==='pago'}),pending=rows.filter(function(r){return r.status==='pendente'});
  function sec(title,list,kind){return '<div class="panel simple-panel report-section"><div class="panel-title"><h3>'+title+'</h3><span class="badge '+(kind==='ok'?'green':'red')+'">'+list.length+'</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th></tr></thead><tbody>'+(paymentRows(list,false)||'<tr><td colspan="6" class="empty">Nenhum registro.</td></tr>')+'</tbody></table></div></div>'}
  E('content').innerHTML='<div id="printArea"><div class="simple-toolbar"><div><h2>Relatório mensal</h2><p>Relação objetiva para conferência e cobrança.</p></div><div class="report-actions">'+monthPicker('simpleReportMonth',k)+'<button id="simplePrint" class="btn secondary">Imprimir / PDF</button></div></div>'+summaryCards(rows)+sec('Pagos',paid,'ok')+sec('Pendentes',pending,'bad')+'</div>';
  E('simpleReportMonth').onchange=function(){window._simpleReportMonth=this.value;simpleReports()};E('simplePrint').onclick=function(){window.print()}
 }
+// Centraliza cadastros técnicos e configurações administrativas.
 async function settingsHub(){
  E('content').innerHTML='<div class="simple-toolbar"><div><h2>Configurações e cadastros</h2><p>Dados estruturais ficam aqui e não ocupam o menu do dia a dia.</p></div></div><div class="settings-grid">'+[['Imóveis','Endereços, valores-base e situação'],['Inquilinos','Dados e contatos dos locatários'],['Contratos','Vínculos, valores e vencimentos'],['Proprietários','Cadastros dos proprietários'],['Acessos','Usuários e permissões']].map(function(x){return '<button class="settings-card" data-config="'+x[0]+'"><b>'+x[0]+'</b><span>'+x[1]+'</span><i>→</i></button>'}).join('')+'</div><div id="settingsDetail"></div>';
  Array.prototype.forEach.call(document.querySelectorAll('[data-config]'),function(b){b.onclick=async function(){page=b.dataset.config;await modulePage();var html=E('content').innerHTML;page='Configurações';E('settingsDetail').innerHTML='<div class="settings-detail"><button id="backSettings" class="linkmini">← Voltar aos cadastros</button>'+html+'</div>';E('backSettings').onclick=settingsHub}})
 }
+// Guarda o carregador original e direciona as novas telas sem apagar funções legadas.
 var originalLoad=window.load||load;
 load=async function(){
  var C=E('content');if(!C)return;
  try{
   if(page==='Dashboard')return simpleDash();
+  if(page==='Cadastros'&&currentRole==='admin')return cadastrosPage();
+  if(page==='Contratos'&&currentRole==='admin')return contractsPage();
   if(page==='Pagamentos')return paymentsPage();
   if(page==='Chamados')return callsPage();
   if(page==='Relatórios')return simpleReports();
@@ -74,5 +132,6 @@ load=async function(){
   return originalLoad.apply(this,arguments)
  }catch(e){C.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}
 };window.load=load;
-var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Pagamentos':'$','IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
+// Define os ícones usados no menu lateral simplificado.
+var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Cadastros':'＋','Contratos':'▤','Pagamentos':'$','IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
 })();
