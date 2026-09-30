@@ -1,0 +1,11 @@
+[functions.admin-create-user]
+verify_jwt = true
+
+[functions.whatsapp-send]
+verify_jwt = true
+
+[functions.secure-login]
+verify_jwt = false
+
+[functions.push-dispatch]
+verify_jwt = false

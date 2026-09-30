@@ -4,26 +4,30 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "biome lint observability.js scripts tests vitest.config.js playwright.config.js stryker.config.mjs commitlint.config.mjs",
-    "format": "biome format --write observability.js scripts tests *.config.js *.config.mjs",
+    "lint": "biome lint observability.js sw.js scripts tests supabase/functions vitest.config.js playwright.config.js stryker.config.mjs commitlint.config.mjs",
+    "format": "biome format --write observability.js sw.js scripts tests supabase/functions vitest.config.js playwright.config.js stryker.config.mjs commitlint.config.mjs",
     "arch:check": "node scripts/check-architecture.mjs",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/run-e2e.mjs",
+    "test:security": "vitest run tests/integration/security-hardening.test.js",
     "knip": "knip --include dependencies,unlisted",
     "mutation": "stryker run",
     "quality": "npm run lint && npm run arch:check && npm run test:coverage && npm run knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "latest",
-    "@commitlint/cli": "latest",
-    "@commitlint/config-conventional": "latest",
-    "@playwright/test": "latest",
-    "@stryker-mutator/core": "latest",
-    "@stryker-mutator/vitest-runner": "latest",
-    "@vitest/coverage-v8": "latest",
-    "jsdom": "latest",
-    "knip": "latest",
-    "vitest": "latest"
+    "@biomejs/biome": "2.5.14",
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@playwright/test": "1.63.0",
+    "@stryker-mutator/core": "10.0.0",
+    "@stryker-mutator/vitest-runner": "10.0.0",
+    "@vitest/coverage-v8": "5.0.2",
+    "jsdom": "30.1.1",
+    "knip": "6.38.0",
+    "vitest": "5.0.2"
+  },
+  "overrides": {
+    "qs": "6.16.0"
   }
 }

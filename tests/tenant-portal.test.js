@@ -5,7 +5,9 @@ describe('portal do inquilino', () => {
   const source = fs.readFileSync(new URL('../tenant-portal.js', import.meta.url), 'utf8');
 
   it('limita o menu do inquilino aos módulos pessoais', () => {
-    expect(source).toContain("['Dashboard','Imóveis','Contratos','Cobranças','IPTU','Manutenção','Documentos']");
+    expect(source).toContain(
+      "['Dashboard','Imóveis','Contratos','Cobranças','IPTU','Manutenção','Documentos']",
+    );
     expect(source).not.toContain("'Financeiro','Relatórios'");
     expect(source).not.toContain("tenantMenus.push('Vistorias')");
   });

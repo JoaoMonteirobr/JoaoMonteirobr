@@ -1,6 +1,4 @@
-(function () {
-  'use strict';
-
+(() => {
   const state = {
     config: null,
     sessionId: crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
@@ -35,7 +33,10 @@
     return [
       { key: 'service.name', value: { stringValue: 'matos-gestao-alugueis' } },
       { key: 'service.version', value: { stringValue: document.documentElement.dataset.build || 'web' } },
-      { key: 'deployment.environment', value: { stringValue: location.hostname.includes('vercel.app') ? 'production' : 'local' } },
+      {
+        key: 'deployment.environment',
+        value: { stringValue: location.hostname.includes('vercel.app') ? 'production' : 'local' },
+      },
       { key: 'session.id', value: { stringValue: state.sessionId } },
     ];
   }
@@ -44,10 +45,12 @@
     const cfg = state.config || safeConfig();
     if (!cfg.otelEndpoint) return;
     const payload = {
-      resourceSpans: [{
-        resource: { attributes: resourceAttributes() },
-        scopeSpans: [{ scope: { name: 'matos.web', version: '1' }, spans: [span] }],
-      }],
+      resourceSpans: [
+        {
+          resource: { attributes: resourceAttributes() },
+          scopeSpans: [{ scope: { name: 'matos.web', version: '1' }, spans: [span] }],
+        },
+      ],
     };
     try {
       await fetch(cfg.otelEndpoint, {
@@ -63,17 +66,29 @@
 
   function vendorAction(name, data) {
     const clean = scrub(data || {});
-    try { window.Sentry?.addBreadcrumb?.({ category: 'matos', message: name, data: clean, level: 'info' }); } catch (_) {}
-    try { window.DD_RUM?.addAction?.(name, clean); } catch (_) {}
-    try { window.newrelic?.addPageAction?.(name, clean); } catch (_) {}
+    try {
+      window.Sentry?.addBreadcrumb?.({ category: 'matos', message: name, data: clean, level: 'info' });
+    } catch (_) {}
+    try {
+      window.DD_RUM?.addAction?.(name, clean);
+    } catch (_) {}
+    try {
+      window.newrelic?.addPageAction?.(name, clean);
+    } catch (_) {}
   }
 
   function captureException(error, context) {
     const err = error instanceof Error ? error : new Error(String(error));
     const clean = scrub(context || {});
-    try { window.Sentry?.captureException?.(err, { extra: clean }); } catch (_) {}
-    try { window.DD_RUM?.addError?.(err, clean); } catch (_) {}
-    try { window.newrelic?.noticeError?.(err, clean); } catch (_) {}
+    try {
+      window.Sentry?.captureException?.(err, { extra: clean });
+    } catch (_) {}
+    try {
+      window.DD_RUM?.addError?.(err, clean);
+    } catch (_) {}
+    try {
+      window.newrelic?.noticeError?.(err, clean);
+    } catch (_) {}
 
     const span = {
       traceId: randomHex(16),
@@ -84,7 +99,13 @@
       endTimeUnixNano: nowNs(),
       attributes: [{ key: 'exception.message', value: { stringValue: err.message } }],
       status: { code: 2, message: err.message },
-      events: [{ timeUnixNano: nowNs(), name: 'exception', attributes: [{ key: 'exception.type', value: { stringValue: err.name || 'Error' } }] }],
+      events: [
+        {
+          timeUnixNano: nowNs(),
+          name: 'exception',
+          attributes: [{ key: 'exception.type', value: { stringValue: err.name || 'Error' } }],
+        },
+      ],
     };
     sendOtlp(span);
   }
@@ -97,7 +118,10 @@
       name,
       kind: 1,
       startTimeUnixNano: nowNs(),
-      attributes: Object.entries(scrub(attributes || {})).map(([key, value]) => ({ key, value: { stringValue: String(value) } })),
+      attributes: Object.entries(scrub(attributes || {})).map(([key, value]) => ({
+        key,
+        value: { stringValue: String(value) },
+      })),
     });
     return id;
   }
@@ -122,7 +146,11 @@
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          track('performance', { type: entry.entryType, name: entry.name, duration: Math.round(entry.duration || 0) });
+          track('performance', {
+            type: entry.entryType,
+            name: entry.name,
+            duration: Math.round(entry.duration || 0),
+          });
         }
       });
       observer.observe({ entryTypes: ['navigation', 'longtask'] });
@@ -131,8 +159,12 @@
 
   function init(config) {
     state.config = { ...safeConfig(), ...(config || {}) };
-    window.addEventListener('error', (event) => captureException(event.error || event.message, { source: event.filename, line: event.lineno }));
-    window.addEventListener('unhandledrejection', (event) => captureException(event.reason, { source: 'unhandledrejection' }));
+    window.addEventListener('error', (event) =>
+      captureException(event.error || event.message, { source: event.filename, line: event.lineno }),
+    );
+    window.addEventListener('unhandledrejection', (event) =>
+      captureException(event.reason, { source: 'unhandledrejection' }),
+    );
     window.addEventListener('online', () => track('network.online'));
     window.addEventListener('offline', () => track('network.offline'));
     collectWebVitals();

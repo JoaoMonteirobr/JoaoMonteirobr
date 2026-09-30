@@ -19,7 +19,7 @@ describe('cadastro seguro PF/PJ de inquilinos', () => {
 
   it('consulta CNPJ somente por ação explícita e sem cache', () => {
     expect(js).toContain("btn.textContent='Buscar CNPJ'");
-    expect(js).toContain("btn.onclick=lookupCnpj");
+    expect(js).toContain('btn.onclick=lookupCnpj');
     expect(js).toContain("cache:'no-store'");
     expect(js).toContain('LOOKUP_COOLDOWN=2500');
   });

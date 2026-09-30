@@ -1,36 +1,47 @@
-name: Sincronizar Matos da Vercel
+name: Auditar divergência da produção
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/sync-production.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  sync:
-    if: github.actor != 'github-actions[bot]'
+  audit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
 
-      - name: Baixar versão de produção
+      - name: Baixar arquivos públicos da produção
         run: |
-          curl -fsSL https://gestao-alugueis-jp.vercel.app/ -o index.html
-          curl -fsSL https://gestao-alugueis-jp.vercel.app/style.css -o style.css
-          curl -fsSL https://gestao-alugueis-jp.vercel.app/app1.js -o app1.js
-          curl -fsSL https://gestao-alugueis-jp.vercel.app/app2.js -o app2.js
-          curl -fsSL https://gestao-alugueis-jp.vercel.app/app3.js -o app3.js
+          mkdir -p production-snapshot
+          curl -fsSL --retry 3 https://gestao-alugueis-jp.vercel.app/ -o production-snapshot/index.html
+          curl -fsSL --retry 3 https://gestao-alugueis-jp.vercel.app/style.css -o production-snapshot/style.css
+          curl -fsSL --retry 3 https://gestao-alugueis-jp.vercel.app/app1.js -o production-snapshot/app1.js
+          curl -fsSL --retry 3 https://gestao-alugueis-jp.vercel.app/app2.js -o production-snapshot/app2.js
+          curl -fsSL --retry 3 https://gestao-alugueis-jp.vercel.app/app3.js -o production-snapshot/app3.js
 
-      - name: Salvar no GitHub
+      - name: Comparar produção com o repositório
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html style.css app1.js app2.js app3.js
-          git diff --cached --quiet && exit 0
-          git commit -m "Sincronizar Matos Gestão de Aluguéis da produção"
-          git push
+          : > production-drift.patch
+          changed=0
+          for file in index.html style.css app1.js app2.js app3.js; do
+            if ! cmp -s "$file" "production-snapshot/$file"; then
+              diff -u "$file" "production-snapshot/$file" >> production-drift.patch || true
+              changed=1
+            fi
+          done
+          if [ "$changed" -ne 0 ]; then
+            echo "A produção diverge da main. Consulte o artefato production-drift."
+            exit 1
+          fi
+
+      - name: Publicar relatório de divergência
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: production-drift
+          path: production-drift.patch
+          retention-days: 7
