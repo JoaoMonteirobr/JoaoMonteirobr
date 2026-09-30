@@ -42,7 +42,8 @@ async function paymentsPage(){
  var manual=currentRole==='admin'?'<button id="quickPayment" class="btn primary">⚡ Pagamento rápido</button><button id="manualPayment" class="btn secondary">+ Adicionar pagamento</button>':'';
  E('content').innerHTML='<div class="simple-toolbar"><div><h2>Pagamentos</h2><p>Informe somente o que foi recebido. O restante é considerado pendente automaticamente.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">'+monthPicker('paymentMonth',k)+manual+'</div></div>'+summaryCards(rows)+'<div class="panel simple-panel"><div class="panel-title"><h3>Aluguéis da competência</h3><span class="muted">'+rows.length+' contratos</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th>'+(currentRole==='admin'?'<th>Ação</th>':'')+'</tr></thead><tbody>'+(paymentRows(rows,currentRole==='admin')||'<tr><td colspan="7" class="empty">Nenhum contrato vinculado a esta competência. Use <b>Adicionar pagamento</b> para registrar manualmente.</td></tr>')+'</tbody></table></div></div>';
  E('paymentMonth').onchange=function(){window._simpleMonth=this.value;paymentsPage()};
- if(E('quickPayment'))E('quickPayment').onclick=function(){openQuickPayment(k)};\n if(E('manualPayment'))E('manualPayment').onclick=function(){openManualPayment(k)};
+ if(E('quickPayment'))E('quickPayment').onclick=function(){openQuickPayment(k)};
+ if(E('manualPayment'))E('manualPayment').onclick=function(){openManualPayment(k)};
  Array.prototype.forEach.call(document.querySelectorAll('[data-pay]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.contract.id===b.dataset.pay});openPayment(r,k)}})
 }
 async function openQuickPayment(k){
