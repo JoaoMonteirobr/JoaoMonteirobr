@@ -183,3 +183,5 @@ $$;
 
 
 commit;
+
+-- Security permissions rollout validated by CI.
