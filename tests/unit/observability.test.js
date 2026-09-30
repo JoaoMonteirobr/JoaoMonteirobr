@@ -14,7 +14,7 @@ describe('observability', () => {
     const result = window.__MatosObservabilityTest.scrub({
       nome: 'Maria',
       token: 'secret',
-      nested: { senha: '123', cidade: 'Rio Branco' }
+      nested: { senha: '123', cidade: 'Rio Branco' },
     });
     expect(result.nome).toBe('Maria');
     expect(result.token).toBe('[REDACTED]');
@@ -30,7 +30,9 @@ describe('observability', () => {
   });
 
   test('captures exceptions without breaking the app', () => {
-    expect(() => window.MatosObservability.captureException(new Error('falha de teste'), { senha: '123' })).not.toThrow();
+    expect(() =>
+      window.MatosObservability.captureException(new Error('falha de teste'), { senha: '123' }),
+    ).not.toThrow();
     expect(window.Sentry.captureException).toHaveBeenCalled();
     expect(window.DD_RUM.addError).toHaveBeenCalled();
     expect(window.newrelic.noticeError).toHaveBeenCalled();

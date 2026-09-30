@@ -1,31 +1,52 @@
-name: Vendor PDF dependencies
+name: Atualizar dependências PDF vendorizadas
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/vendor-pdf.yml'
   workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue que autoriza a atualização
+        required: true
+        type: string
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   vendor:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Download pinned browser libraries
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: main
+
+      - name: Baixar versões fixadas
         run: |
           mkdir -p vendor
-          curl -fL --retry 3 https://raw.githubusercontent.com/parallax/jsPDF/v2.5.1/dist/jspdf.umd.min.js -o vendor/jspdf.umd.min.js
-          curl -fL --retry 3 https://raw.githubusercontent.com/davidshimjs/qrcodejs/master/qrcode.min.js -o vendor/qrcode.min.js
-          test -s vendor/jspdf.umd.min.js
-          test -s vendor/qrcode.min.js
-      - name: Commit vendor files
+          curl -fL --retry 3 https://raw.githubusercontent.com/parallax/jsPDF/7315ccbb54fdf47a3498cfb3c9f757da5c450242/dist/jspdf.umd.min.js -o vendor/jspdf.umd.min.js
+          curl -fL --retry 3 https://raw.githubusercontent.com/davidshimjs/qrcodejs/04f46c6a0708418cb7b96fc563eacae0fbf77674/qrcode.min.js -o vendor/qrcode.min.js
+          echo "8b24adad5a45662aa40daf98be05855d89b8a23d0cc757d6530ba3edd682efc5  vendor/jspdf.umd.min.js" | sha256sum -c -
+          echo "c541ef06327885a8415bca8df6071e14189b4855336def4f36db54bde8484f36  vendor/qrcode.min.js" | sha256sum -c -
+
+      - name: Criar Pull Request quando houver alteração
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ inputs.issue_number }}
         run: |
+          [[ "$ISSUE_NUMBER" =~ ^[0-9]+$ ]] || { echo "issue_number deve ser numérico"; exit 1; }
+          if git diff --quiet -- vendor/jspdf.umd.min.js vendor/qrcode.min.js; then
+            echo "As bibliotecas já correspondem às versões fixadas."
+            exit 0
+          fi
+          branch="automation/vendor-pdf-${{ github.run_id }}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
           git add vendor/jspdf.umd.min.js vendor/qrcode.min.js
-          git diff --cached --quiet || git commit -m "Vendorizar bibliotecas PDF e QR Code"
-          git push
+          git commit -m "chore: atualizar bibliotecas PDF vendorizadas"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore: atualizar bibliotecas PDF vendorizadas" \
+            --body "Atualização automatizada das dependências PDF fixadas.\n\nRefs #${ISSUE_NUMBER}"

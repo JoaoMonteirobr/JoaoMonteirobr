@@ -6,18 +6,32 @@
     "motion-system.js",
     "firebase-config.js",
     "charge-pdf-safe.js",
-    "tenant-portal.js"
+    "tenant-portal.js",
+    "supabase/config.toml",
+    "supabase/functions/admin-create-user/index.ts",
+    "supabase/functions/secure-login/index.ts",
+    "supabase/functions/whatsapp-send/index.ts",
+    "supabase/functions/push-dispatch/index.ts",
+    "docs/INFRASTRUCTURE_SECURITY.md"
   ],
   "forbiddenPatterns": [
-    "FIREBASE_SERVICE_ACCOUNT_JSON",
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "PRIVATE KEY-----"
+    "-----BEGIN PRIVATE KEY-----",
+    "-----BEGIN RSA PRIVATE KEY-----",
+    "-----BEGIN EC PRIVATE KEY-----",
+    "-----BEGIN OPENSSH PRIVATE KEY-----"
+  ],
+  "forbiddenRegex": [
+    "sb_secret_[A-Za-z0-9_-]{20,}",
+    "SUPABASE_SERVICE_ROLE_KEY\\s*[:=]\\s*['\\\"][^$'\\\"]+['\\\"]",
+    "FIREBASE_SERVICE_ACCOUNT_JSON\\s*[:=]\\s*['\\\"]\\s*\\{"
   ],
   "protectedModules": [
     "firebase-config.js",
     "charge-pdf-safe.js",
     "alerts.js",
-    "tenant-portal.js"
+    "tenant-portal.js",
+    "sw.js",
+    "supabase/functions"
   ],
   "rules": [
     "Frontend estático deve continuar inicializável sem bundler em produção.",
@@ -25,6 +39,9 @@
     "Integrações de observabilidade externas devem ser opt-in.",
     "O perfil inquilino deve receber somente dados vinculados ao próprio inquilino e nunca indicadores administrativos globais.",
     "Solicitações de manutenção do inquilino devem ser criadas como abertas, sem custos ou prioridade administrativa definidos pelo usuário.",
-    "Alterações funcionais devem seguir Issue -> branch -> PR -> validação -> merge."
+    "Alterações funcionais devem seguir Issue -> branch -> PR -> validação -> merge.",
+    "Edge Functions privilegiadas devem autenticar e autorizar o chamador antes de usar a service role.",
+    "Service workers não devem armazenar respostas de Auth, REST, Storage ou Edge Functions.",
+    "Workflows auxiliares não podem gravar diretamente na main."
   ]
 }

@@ -3,5 +3,5 @@ export default {
   mutate: ['observability.js'],
   reporters: ['clear-text', 'progress', 'html'],
   coverageAnalysis: 'perTest',
-  thresholds: { high: 80, low: 60, break: 50 }
+  thresholds: { high: 80, low: 60, break: 50 },
 };

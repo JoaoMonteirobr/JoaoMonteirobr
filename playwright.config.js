@@ -9,15 +9,17 @@ export default defineConfig({
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4173',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    video: 'retain-on-failure',
   },
-  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : {
-    command: 'python3 -m http.server 4173',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI
-  },
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: 'node scripts/serve-static.mjs',
+        url: 'http://127.0.0.1:4173',
+        reuseExistingServer: !process.env.CI,
+      },
   projects: [
     { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'chromium-mobile', use: { ...devices['Pixel 7'] } }
-  ]
+    { name: 'chromium-mobile', use: { ...devices['Pixel 7'] } },
+  ],
 });
