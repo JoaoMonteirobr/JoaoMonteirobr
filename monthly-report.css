@@ -1,0 +1,65 @@
+/* Relatório mensal de aluguéis (monthly-report.js): tela, celular e impressão. */
+.monthly-report .mr-print-head,.monthly-report .mr-print-title{display:none}
+.mr-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.mr-stat{background:#fff;border:1px solid #dfe8f2;border-radius:14px;padding:16px 18px;box-shadow:0 6px 18px #1029450a}
+.mr-stat span{display:block;color:#667b92;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.mr-stat b{display:block;font-size:24px;color:#102945;margin-top:6px;font-variant-numeric:tabular-nums}
+.mr-stat.mr-ok{border-left:3px solid #20a66a}.mr-stat.mr-ok b{color:#087647}
+.mr-stat.mr-bad{border-left:3px solid #df4c53}.mr-stat.mr-bad b{color:#b4232c}
+.mr-progress{grid-column:1/-1;background:#fff;border:1px solid #dfe8f2;border-radius:14px;padding:14px 18px}
+.mr-bar{height:10px;border-radius:99px;background:#fbe3e4;overflow:hidden}
+.mr-bar i{display:block;height:100%;background:#20a66a;border-radius:99px}
+.mr-progress p{margin:9px 0 0;font-size:13px;color:#33475f}
+.mr-late-text{color:#b4232c}
+.mr-section{margin-top:14px}
+.mr-table{min-width:0}
+.mr-table td{font-size:12.5px;padding:11px 12px}
+.mr-table th{font-size:10px}
+.mr-sub{display:block;color:#70829c;font-size:11.5px;font-weight:400;margin-top:2px}
+.mr-num{text-align:right!important;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mr-strong{font-weight:800;color:#102945}
+.mr-due{display:block;font-size:11px;font-weight:700;margin-top:2px}
+.mr-due-late{color:#b4232c}.mr-due-soon{color:#b86e00}.mr-due-ok{color:#4b6280}.mr-due-muted{color:#8191a4}
+.mr-table tfoot td{background:#f4f8fd;font-weight:800;font-size:13px;color:#102945;border-bottom:0}
+.mr-table tfoot .mr-sub-total td{font-weight:600;font-size:12px;color:#4b6280;background:#fafcfe}
+.mr-empty{margin:4px 0 6px;color:#4b6280;font-size:13px}
+
+/* Celular: cada linha vira um cartão, sem rolagem lateral. */
+@media(max-width:700px){
+ .mr-summary{grid-template-columns:1fr 1fr}
+ .mr-stat:first-child{grid-column:1/-1}
+ .mr-stat b{font-size:20px}
+ .mr-table thead{display:none}
+ .mr-table,.mr-table tbody,.mr-table tfoot,.mr-table tr,.mr-table td{display:block;width:100%}
+ .mr-table tbody tr{border:1px solid #e3ebf4;border-radius:12px;padding:6px 4px;margin-bottom:10px}
+ .mr-table td{border:0;padding:5px 10px;display:flex;justify-content:space-between;gap:12px;text-align:right}
+ .mr-table td[data-label]::before{content:attr(data-label);color:#70829c;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:left;flex:none}
+ .mr-table tbody td:first-child{display:block;text-align:left;padding-bottom:7px;border-bottom:1px solid #eef3f8;margin-bottom:3px}
+ .mr-table tbody td:first-child::before{display:none}
+ .mr-table td .mr-due{margin-top:0}
+ .mr-table tbody td:not(:first-child){align-items:baseline}
+ .mr-table tbody td[data-label="Vencimento"]{flex-wrap:wrap}
+ .mr-table tfoot tr{border-radius:12px;overflow:hidden}
+ .mr-table tfoot td[colspan]{display:none}
+ .mr-table tfoot td{padding:10px 12px}
+}
+
+/* Impressão / PDF: A4, preto no branco, sem navegação. */
+@media print{
+ @page{size:A4;margin:14mm 12mm}
+ body,.main,.shell{background:#fff!important}
+ .monthly-report .mr-toolbar{display:none!important}
+ .monthly-report .mr-print-head{display:flex;justify-content:space-between;font-size:10px;color:#4b6280;border-bottom:1px solid #c9d4e2;padding-bottom:6px;margin-bottom:10px}
+ .monthly-report .mr-print-title{display:block;font-size:18px;color:#000;margin:0 0 12px}
+ .mr-stat,.mr-progress,.mr-section{box-shadow:none!important;border-color:#c9d4e2!important}
+ .mr-summary{grid-template-columns:repeat(3,1fr);gap:8px}
+ .mr-stat{padding:10px 12px}.mr-stat b{font-size:17px}
+ .mr-bar{border:1px solid #c9d4e2;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .mr-bar i{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .mr-section{break-inside:auto;padding:10px 12px}
+ .mr-table tr{break-inside:avoid}
+ .mr-table thead{display:table-header-group}
+ .mr-table td{font-size:10.5px;padding:6px 8px;color:#000}
+ .mr-table th{font-size:8.5px;color:#333;background:#eef2f7!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .mr-table tfoot td{font-size:11px;background:#eef2f7!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

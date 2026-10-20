@@ -138,7 +138,9 @@ async function callsPage(){
 }
 // Gera a visão mensal de pagos e pendentes, pronta para impressão/PDF.
 async function simpleReports(){
- var k=window._simpleReportMonth||isoMonth(),rows=await ledgerData(k);window._simpleReportMonth=k;var paid=rows.filter(function(r){return r.status==='pago'}),pending=rows.filter(function(r){return r.status==='pendente'});
+ var k=window._simpleReportMonth||isoMonth(),rows=await ledgerData(k);window._simpleReportMonth=k;
+ var MR=window.MatosMonthlyReport;if(MR){E('content').innerHTML=MR.render(MR.summarize(rows,k),{esc:esc,money:money,dateBR:dateBR,picker:monthPicker('simpleReportMonth',k)});E('simpleReportMonth').onchange=function(){window._simpleReportMonth=this.value;simpleReports()};E('simplePrint').onclick=function(){window.print()};return}
+ var paid=rows.filter(function(r){return r.status==='pago'}),pending=rows.filter(function(r){return r.status==='pendente'});
  function sec(title,list,kind){return '<div class="panel simple-panel report-section"><div class="panel-title"><h3>'+title+'</h3><span class="badge '+(kind==='ok'?'green':'red')+'">'+list.length+'</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th></tr></thead><tbody>'+(paymentRows(list,false)||'<tr><td colspan="6" class="empty">Nenhum registro.</td></tr>')+'</tbody></table></div></div>'}
  E('content').innerHTML='<div id="printArea"><div class="simple-toolbar"><div><h2>Relatório mensal</h2><p>Relação objetiva para conferência e cobrança.</p></div><div class="report-actions">'+monthPicker('simpleReportMonth',k)+'<button id="simplePrint" class="btn secondary">Imprimir / PDF</button></div></div>'+summaryCards(rows)+sec('Pagos',paid,'ok')+sec('Pendentes',pending,'bad')+'</div>';
  E('simpleReportMonth').onchange=function(){window._simpleReportMonth=this.value;simpleReports()};E('simplePrint').onclick=function(){window.print()}
