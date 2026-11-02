@@ -31,8 +31,18 @@ function summaryCards(rows){
  var prev=rows.reduce(function(s,r){return s+r.expected},0),paid=rows.reduce(function(s,r){return s+r.paid},0),pend=rows.reduce(function(s,r){return s+r.pending},0),ok=rows.filter(function(r){return r.status==='pago'}).length;
  return '<div class="simple-cards"><div class="simple-card"><span>Previsto</span><b>'+money(prev)+'</b><small>'+rows.length+' locações ativas</small></div><div class="simple-card positive"><span>Recebido</span><b>'+money(paid)+'</b><small>'+ok+' pagamentos informados</small></div><div class="simple-card danger"><span>Pendente</span><b>'+money(pend)+'</b><small>'+(rows.length-ok)+' aguardando pagamento</small></div><div class="simple-card"><span>Regularidade</span><b>'+(rows.length?Math.round(ok/rows.length*100):0)+'%</b><small>da competência selecionada</small></div></div>'
 }
-async function ensurePaidHistory(){if(currentRole!=='admin'||window._paidHistoryChecked)return;window._paidHistoryChecked=true;var months=['2026-06','2026-07','2026-08'],ims=(cache.imoveis||[]).filter(function(im){return Number(im.aluguel_base||0)>0}),cts=cache.contratos||[],charges=cache.cobrancas||[];for(var i=0;i<ims.length;i++){var im=ims[i],ct=cts.find(function(c){return c.imovel_id===im.id});for(var m=0;m<months.length;m++){var k=months[m];if(paymentFor(ct&&ct.id,k,charges,im.id))continue;var rent=Number(ct&&ct.aluguel_atual||im.aluguel_base||0);if(rent<=0)continue;var tenant=ct&&ct.inquilino_id||im.inquilino_id||null,obj={inquilino_id:tenant,imovel_id:im.id,contrato_id:ct?ct.id:null,competencia:k+'-01',vencimento:k+'-05',aluguel:rent,outros_encargos:0,valor_pago:rent,data_pagamento:k+'-05',forma_pagamento:'outro',status:'pago',observacoes:'Histórico inicial: pagamento informado como quitado no dia 5.'};var inserted=await dbInsert('cobrancas',obj);if(inserted&&inserted[0])charges.push(inserted[0]);else charges.push(obj)}}cache.cobrancas=null;await dbGet('cobrancas')}
+async function ensurePaidHistory(){if(currentRole!=='admin'||window._paidHistoryChecked)return;window._paidHistoryChecked=true;var months=['2026-06','2026-07','2026-08'],ims=(cache.imoveis||[]).filter(function(im){return Number(im.aluguel_base||0)>0}),cts=cache.contratos||[],charges=cache.cobrancas||[];for(var i=0;i<ims.length;i++){var im=ims[i],ct=cts.find(function(c){return c.imovel_id===im.id});for(var m=0;m<months.length;m++){var k=months[m];if(im.created_at&&String(im.created_at).slice(0,10)>monthEnd(k))continue;if(paymentFor(ct&&ct.id,k,charges,im.id))continue;var rent=Number(ct&&ct.aluguel_atual||im.aluguel_base||0);if(rent<=0)continue;var tenant=ct&&ct.inquilino_id||im.inquilino_id||null,obj={inquilino_id:tenant,imovel_id:im.id,contrato_id:ct?ct.id:null,competencia:k+'-01',vencimento:k+'-05',aluguel:rent,outros_encargos:0,valor_pago:rent,data_pagamento:k+'-05',forma_pagamento:'outro',status:'pago',observacoes:'Histórico inicial: pagamento informado como quitado no dia 5.'};var inserted=await dbInsert('cobrancas',obj);if(inserted&&inserted[0])charges.push(inserted[0]);else charges.push(obj)}}cache.cobrancas=null;await dbGet('cobrancas')}
 async function ledgerData(k){await Promise.all(['contratos','cobrancas','imoveis','inquilinos'].map(dbGet));await ensurePaidHistory();return buildLedger(cache.contratos||[],cache.cobrancas||[],cache.imoveis||[],cache.inquilinos||[],k)}
+function groupedPaymentRows(rows,actions){
+ var colSpan=actions?7:6;
+ return groupedByLocation(rows,function(r){return r.property}).map(function(group){
+  var header='<tr class="payment-address-heading"><td colspan="'+colSpan+'">'+esc(group.label)+' <span>('+groupCount(group)+' unidades)</span></td></tr>';
+  return header+['apartamentos','comerciais','outros'].map(function(cat){
+   if(!group[cat].length)return '';
+   return '<tr class="payment-category-heading"><td colspan="'+colSpan+'">'+categoryTitle(cat)+'</td></tr>'+paymentRows(group[cat],actions)
+  }).join('')
+ }).join('')
+}
 function paymentRows(rows,actions){
  return rows.map(function(r){return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+'</td><td>'+st(r.status)+'</td>'+(actions?'<td><button class="row-primary" data-pay="'+r.contract.id+'">'+(r.status==='pago'?'Editar':'Informar pagamento')+'</button></td>':'')+'</tr>'}).join('')
 }
@@ -40,7 +50,7 @@ function paymentRows(rows,actions){
 async function paymentsPage(){
  var k=window._simpleMonth||isoMonth(),rows=await ledgerData(k);window._simpleMonth=k;
  var manual=currentRole==='admin'?'<button id="quickPayment" class="btn primary">⚡ Pagamento rápido</button><button id="manualPayment" class="btn secondary">+ Adicionar pagamento</button>':'';
- E('content').innerHTML='<div class="simple-toolbar"><div><h2>Pagamentos</h2><p>Informe somente o que foi recebido. O restante é considerado pendente automaticamente.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">'+monthPicker('paymentMonth',k)+manual+'</div></div>'+summaryCards(rows)+'<div class="panel simple-panel"><div class="panel-title"><h3>Aluguéis da competência</h3><span class="muted">'+rows.length+' contratos</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th>'+(currentRole==='admin'?'<th>Ação</th>':'')+'</tr></thead><tbody>'+(paymentRows(rows,currentRole==='admin')||'<tr><td colspan="7" class="empty">Nenhum contrato vinculado a esta competência. Use <b>Adicionar pagamento</b> para registrar manualmente.</td></tr>')+'</tbody></table></div></div>';
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Pagamentos</h2><p>Informe somente o que foi recebido. O restante é considerado pendente automaticamente.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">'+monthPicker('paymentMonth',k)+manual+'</div></div>'+summaryCards(rows)+'<div class="panel simple-panel"><div class="panel-title"><h3>Aluguéis da competência</h3><span class="muted">'+rows.length+' contratos</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th>'+(currentRole==='admin'?'<th>Ação</th>':'')+'</tr></thead><tbody>'+(groupedPaymentRows(rows,currentRole==='admin')||'<tr><td colspan="7" class="empty">Nenhum contrato vinculado a esta competência. Use <b>Adicionar pagamento</b> para registrar manualmente.</td></tr>')+'</tbody></table></div></div>';
  E('paymentMonth').onchange=function(){window._simpleMonth=this.value;paymentsPage()};
  if(E('quickPayment'))E('quickPayment').onclick=function(){openQuickPayment(k)};
  if(E('manualPayment'))E('manualPayment').onclick=function(){openManualPayment(k)};
@@ -80,11 +90,55 @@ function daysUntil(v){if(!v)return 99999;var t=new Date(String(v).slice(0,10)+'T
 // CADASTRO DE IMÓVEIS E INQUILINOS
 // =====================================================
 // Lista imóveis e mostra o inquilino vinculado quando o imóvel está ocupado.
+// Agrupa unidades sem alterar IDs, contratos ou vínculos financeiros.
+function unitCategory(im){
+ var tipo=String(im&&im.tipo||'').toLowerCase();
+ if(tipo.indexOf('apart')!==-1)return 'apartamentos';
+ if(/loja|galp|comercial/.test(tipo))return 'comerciais';
+ return 'outros'
+}
+function locationKey(im){
+ var street=String(im&&im.endereco||'Endereço não informado').trim().toLowerCase();
+ street=street.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/^(rua|r\.|avenida|av\.)\s+/,'').replace(/\s+/g,' ');
+ return street+'|'+String(im&&im.numero||'').trim().toLowerCase()
+}
+function locationLabel(im){
+ var street=String(im&&im.endereco||'Endereço não informado').trim();
+ if(/^major salinas$/i.test(street))street='Rua Major Salinas';
+ return street+(im&&im.numero?' , '+im.numero:'')
+}
+function groupedByLocation(items,getImovel){
+ var groups=[],byKey={};
+ (items||[]).forEach(function(item){
+  var im=getImovel(item)||{},key=locationKey(im),g=byKey[key];
+  if(!g){g={key:key,label:locationLabel(im),apartamentos:[],comerciais:[],outros:[]};byKey[key]=g;groups.push(g)}
+  g[unitCategory(im)].push(item)
+ });
+ groups.sort(function(a,b){return a.label.localeCompare(b.label,'pt-BR',{numeric:true})});
+ groups.forEach(function(g){
+  ['apartamentos','comerciais','outros'].forEach(function(cat){
+   g[cat].sort(function(a,b){var x=getImovel(a)||{},y=getImovel(b)||{};return String(x.complemento||x.nome||'').localeCompare(String(y.complemento||y.nome||''),'pt-BR',{numeric:true})})
+  })
+ });
+ return groups
+}
+function groupCount(group){return group.apartamentos.length+group.comerciais.length+group.outros.length}
+function categoryTitle(cat){return {apartamentos:'Apartamentos',comerciais:'Comerciais',outros:'Outros imóveis'}[cat]}
 async function cadastrosPage(){
  await Promise.all([dbGet('imoveis'),dbGet('inquilinos')]);
- var ims=cache.imoveis||[],inqs=cache.inquilinos||[];
- var rows=ims.map(function(im){var t=inqs.find(function(x){return x.id===im.inquilino_id});return '<tr><td><b>'+esc(im.nome||im.endereco||'Imóvel')+'</b><div class="muted">'+esc([im.endereco,im.numero,im.bairro].filter(Boolean).join(', '))+'</div></td><td>'+money(im.aluguel_base)+'</td><td>'+st(im.status==='vago'?'desocupado':im.status)+'</td><td>'+esc(t&&t.nome||'—')+'</td></tr>'}).join('');
- E('content').innerHTML='<div class="simple-toolbar"><div><h2>Cadastros</h2><p>Gerencie os imóveis cadastrados e seus inquilinos.</p></div><button id="newProperty" class="btn primary">+ Cadastrar imóvel</button></div><div class="panel simple-panel"><div class="panel-title"><h3>Imóveis cadastrados</h3><span class="muted">'+ims.length+' imóveis</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Imóvel / endereço</th><th>Aluguel</th><th>Situação</th><th>Inquilino</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" class="empty">Nenhum imóvel cadastrado.</td></tr>')+'</tbody></table></div></div>';
+ var ims=cache.imoveis||[],inqs=cache.inquilinos||[],groups=groupedByLocation(ims,function(im){return im});
+ var panels=groups.map(function(group){
+  var sections=['apartamentos','comerciais','outros'].map(function(cat){
+   var items=group[cat];if(!items.length)return '';
+   var rows=items.map(function(im){
+    var t=inqs.find(function(x){return x.id===im.inquilino_id});
+    return '<tr><td><b>'+esc(im.nome||im.complemento||'Imóvel')+'</b>'+(im.complemento?'<div class="muted">'+esc(im.complemento)+'</div>':'')+'</td><td>'+money(im.aluguel_base)+'</td><td>'+st(im.status==='vago'?'desocupado':im.status)+'</td><td>'+esc(t&&t.nome||'—')+'</td></tr>'
+   }).join('');
+   return '<div class="property-subgroup"><h4>'+categoryTitle(cat)+' <span class="muted">('+items.length+')</span></h4><div class="tablewrap"><table class="table"><thead><tr><th>Unidade / imóvel</th><th>Aluguel</th><th>Situação</th><th>Inquilino</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
+  }).join('');
+  return '<section class="panel simple-panel property-address-group"><div class="panel-title"><h3>'+esc(group.label)+'</h3><span class="muted">'+groupCount(group)+' unidades</span></div>'+sections+'</section>'
+ }).join('');
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Cadastros</h2><p>Imóveis agrupados por endereço, apartamentos e unidades comerciais.</p></div><button id="newProperty" class="btn primary">+ Cadastrar imóvel</button></div>'+(panels||'<div class="panel simple-panel"><div class="empty">Nenhum imóvel cadastrado.</div></div>');
  E('newProperty').onclick=function(){openPropertyRegistration(inqs)}
 }
 // Abre o cadastro integrado: imóvel e, se ocupado, dados obrigatórios do inquilino.
