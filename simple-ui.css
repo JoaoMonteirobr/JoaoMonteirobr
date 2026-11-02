@@ -17,3 +17,11 @@
 .payment-address-heading span{color:#6b7f94;font-size:11px;font-weight:500}
 .payment-category-heading td{padding:9px 12px!important;background:#f6f9fd;color:#45627c;font-weight:750;font-size:12px}
 @media(max-width:620px){.property-address-group>.panel-title{padding:13px 12px;align-items:flex-start}.property-address-group>.panel-title h3{font-size:14px}.property-address-group .property-subgroup{padding:8px 9px 12px}.payment-address-heading td{font-size:12px}}
+
+/* Resumo da competência atual e do histórico de 2026, sem duplicar os cartões mensais. */
+.simple-year-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 16px}
+.simple-year-overview>div{border:1px solid #dce6f0;border-radius:12px;background:#f7fbff;padding:13px 17px;display:flex;flex-direction:column;gap:3px}
+.simple-year-overview span{font-size:11px;font-weight:800;color:#57718c}
+.simple-year-overview b{font-size:20px;color:#183f65;line-height:1.25}
+.simple-year-overview small{font-size:11px;color:#7188a0}
+@media(max-width:620px){.simple-year-overview{grid-template-columns:1fr;gap:8px}.simple-year-overview>div{padding:12px 14px}.simple-year-overview b{font-size:19px}}
