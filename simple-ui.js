@@ -105,7 +105,7 @@ function locationKey(im){
 function locationLabel(im){
  var street=String(im&&im.endereco||'Endereço não informado').trim();
  if(/^major salinas$/i.test(street))street='Rua Major Salinas';
- return street+(im&&im.numero?' , '+im.numero:'')
+ return street+(im&&im.numero?', '+im.numero:'')
 }
 function groupedByLocation(items,getImovel){
  var groups=[],byKey={};
