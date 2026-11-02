@@ -25,3 +25,9 @@
 .simple-year-overview b{font-size:20px;color:#183f65;line-height:1.25}
 .simple-year-overview small{font-size:11px;color:#7188a0}
 @media(max-width:620px){.simple-year-overview{grid-template-columns:1fr;gap:8px}.simple-year-overview>div{padding:12px 14px}.simple-year-overview b{font-size:19px}}
+/* Comprovante no Informar pagamento */
+.pay-clip{border:0;background:#eef4fb;border-radius:8px;padding:2px 6px;margin-left:4px;cursor:pointer;font-size:13px}
+.pay-proof-current{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.pay-proof-current small{color:var(--muted)}
+.pay-proof-btns{display:flex;gap:8px;flex-wrap:wrap}.pay-proof-btns .btn{cursor:pointer}
+.pay-proof-name{display:block;margin-top:6px;color:var(--muted)}.pay-proof-err{color:#b4232c;font-weight:600}
+@media(max-width:760px){.pay-proof-btns .btn{flex:1;min-height:46px;justify-content:center}}
