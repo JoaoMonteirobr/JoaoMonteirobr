@@ -230,5 +230,7 @@ load=async function(){
  }catch(e){C.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}
 };window.load=load;
 // Define os ícones usados no menu lateral simplificado.
+// Expõe o agrupamento por endereço para outras telas (ex.: Gastos) usarem o mesmo critério.
+window.MatosLocation={key:locationKey,label:locationLabel,category:unitCategory};
 var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Cadastros':'＋','Contratos':'▤','Pagamentos':'$','IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
 })();
