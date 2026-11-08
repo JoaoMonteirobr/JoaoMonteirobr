@@ -25,14 +25,14 @@ describe('Informar pagamento', () => {
     expect(P.proofProblem({ type: 'image/png', size: 11 * 1024 * 1024 })).toMatch(/10 MB/);
   });
 
-  it('guarda o comprovante numa pasta própria com nome limpo', () => {
-    expect(P.proofPath('Comprovante PIX (março).pdf', 123, 'abc')).toBe('pagamentos/123-abc-Comprovante_PIX__marco_.pdf');
+  it('guarda um caminho opaco sem o nome pessoal do arquivo', () => {
+    expect(P.proofPath('Comprovante PIX (março).pdf', 123, 'abc')).toBe('pagamentos/123-abc.pdf');
   });
 
   it('salva a forma de pagamento escolhida', () => {
     const src = read('simple-ui.js');
     const fn = src.slice(src.indexOf('function openPayment('), src.indexOf('// Comprovante de pagamento'));
     expect(fn).toContain("forma_pagamento:E('pay_method').value");
-    expect(read('index.html')).toContain('/simple-ui.js?v=10');
+    expect(read('index.html')).toContain('/simple-ui.js?v=11');
   });
 });
