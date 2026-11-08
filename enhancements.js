@@ -20,7 +20,7 @@ window.openForm=async function(p,row){
    var k=f[0],lab=f[1],type=f[2]||'text',req=f[3],v=row&&row[k]!=null?row[k]:'';
    body+='<div class="field '+(type==='textarea'?'full':'')+'"><span class="lbl">'+esc(lab)+(req?' *':'')+'</span>';
    if(type==='textarea') body+='<textarea id="f_'+k+'" class="inp">'+esc(v)+'</textarea>';
-   else if(type.indexOf('select:')===0){var vals=type.slice(7).split('|');body+='<select id="f_'+k+'" class="inp"><option value="">Selecione</option>'+vals.map(function(x){return '<option value="'+esc(x)+'" '+(String(v)===String(x)?'selected':'')+'>'+esc(humanOption(x))+'</option>'}).join('')+'</select>'}
+   else if(type.indexOf('select:')===0){var vals=type.slice(7).split('|'),current=String(v==null?'':v);if(current&&vals.indexOf(current)<0)vals.push(current);body+='<select id="f_'+k+'" class="inp"><option value="">Selecione</option>'+vals.map(function(x){return '<option value="'+esc(x)+'" '+(current===String(x)?'selected':'')+'>'+esc(humanOption(x))+'</option>'}).join('')+'</select>'}
    else if(type.indexOf('lookup:')===0){var lt=type.slice(7),arr=cache[lt]||[];body+='<select id="f_'+k+'" class="inp"><option value="">Selecione</option>'+arr.map(function(x){return '<option value="'+x.id+'" '+(String(v)===String(x.id)?'selected':'')+'>'+esc(lookupLabel(lt,x))+'</option>'}).join('')+'</select>'}
    else if(type==='boolean') body+='<select id="f_'+k+'" class="inp"><option value="true" '+(v===true?'selected':'')+'>Sim</option><option value="false" '+(v===false?'selected':'')+'>Não</option></select>';
    else if(isMoneyField(k)){body+='<input id="f_'+k+'" class="inp money-input" inputmode="numeric" autocomplete="off" value="'+esc(v===''?'':brl(v))+'" placeholder="R$ 0,00"><small>Valor em reais.</small>'}
@@ -43,6 +43,39 @@ window.saveForm=async function(p,id){
  if(currentRole!=='admin')return;
  var fields=forms[p],obj={},msg=E('formmsg');
  for(var i=0;i<fields.length;i++){var f=fields[i],k=f[0],lab=f[1],type=f[2]||'text',req=f[3],el=E('f_'+k),v=el.value;if(req&&!v){msg.innerHTML='<div class="notice err">Preencha o campo '+esc(lab)+'.</div>';return}if(isMoneyField(k))v=parseBRL(v);else if(type==='number')v=v===''?null:Number(String(v).replace(',','.'));else if(type==='boolean')v=v==='true';else if(v==='')v=null;obj[k]=v}
+ // Os formulários antigos enviavam NULL para colunas NOT NULL, mesmo quando
+ // o banco possuía valores padrão. Evitamos gravar nulos e dados inconsistentes.
+ if(p==='Proprietários'){
+  if(obj.taxa_administracao==null)obj.taxa_administracao=10;
+  if(!Number.isFinite(obj.taxa_administracao)||obj.taxa_administracao<0||obj.taxa_administracao>100){
+   msg.innerHTML='<div class="notice err">A taxa de administração deve estar entre 0% e 100%.</div>';return
+  }
+  if(obj.dia_repasse!=null&&(!Number.isInteger(obj.dia_repasse)||obj.dia_repasse<1||obj.dia_repasse>31)){
+   msg.innerHTML='<div class="notice err">O dia do repasse deve estar entre 1 e 31.</div>';return
+  }
+ }
+ if(p==='Imóveis'){
+  if(obj.aluguel_base==null)obj.aluguel_base=0;
+  if(obj.condominio==null)obj.condominio=0;
+  if(!obj.status)obj.status='vago';
+  if(!Number.isFinite(obj.aluguel_base)||obj.aluguel_base<0||!Number.isFinite(obj.condominio)||obj.condominio<0){
+   msg.innerHTML='<div class="notice err">Informe valores não negativos para aluguel e condomínio.</div>';return
+  }
+ }
+ if(p==='Inquilinos'&&!obj.status)obj.status='ativo';
+ if(p==='Contratos'){
+  if(!obj.status)obj.status=obj.data_inicio>new Date().toISOString().slice(0,10)?'futuro':'ativo';
+  if(!obj.data_inicio||!obj.data_fim||obj.data_fim<=obj.data_inicio){
+   msg.innerHTML='<div class="notice err">O término do contrato precisa ser posterior à data de início.</div>';return
+  }
+  if(!Number.isInteger(obj.dia_vencimento)||obj.dia_vencimento<1||obj.dia_vencimento>28){
+   msg.innerHTML='<div class="notice err">O dia de vencimento deve estar entre 1 e 28.</div>';return
+  }
+  if(!Number.isFinite(obj.aluguel_atual)||obj.aluguel_atual<=0){
+   msg.innerHTML='<div class="notice err">O aluguel do contrato deve ser maior que zero.</div>';return
+  }
+  if(obj.valor_garantia==null)obj.valor_garantia=0;
+ }
  if(p==='IPTU'){var mod=obj.modalidade||'a_vista';if(mod==='parcelado'){obj.numero_parcelas=Math.max(1,Number(obj.numero_parcelas||1));obj.valor_parcela=Number(obj.valor_parcela||0);obj.valor_total=obj.numero_parcelas*obj.valor_parcela}else{obj.numero_parcelas=1;obj.valor_cota_unica=Number(obj.valor_cota_unica||obj.valor_total||0);obj.valor_total=obj.valor_cota_unica;obj.valor_parcela=0}if(obj.situacao==='pago'&&!obj.data_pagamento)obj.data_pagamento=new Date().toISOString().slice(0,10);if(obj.situacao==='em_aberto')obj.data_pagamento=null}
  if(p==='Cobranças'){var hoje=new Date(),venc=obj.vencimento?new Date(obj.vencimento+'T23:59:59'):null,base=Number(obj.aluguel||0)+Number(obj.outros_encargos||0),pago=Number(obj.valor_pago||0),atrasado=venc&&hoje>venc&&pago<base;if(!atrasado){obj.multa=0;obj.juros=0;if(pago>=base&&base>0)obj.status='pago';else if(obj.status==='atrasado')obj.status='pendente'}else{var dias=Math.max(1,Math.floor((hoje-venc)/86400000));obj.multa=base*.10;obj.juros=base*.01*(dias/30);if(obj.status!=='pago')obj.status='atrasado'}}
  msg.innerHTML='<div class="notice">Salvando cadastro...</div>';try{var t=tables[p];if(id)await dbUpdate(t,id,obj);else await dbInsert(t,obj);E('modal').remove();cache[t]=null;load()}catch(e){msg.innerHTML='<div class="notice err">Não foi possível salvar: '+esc(e.message)+'</div>'}
