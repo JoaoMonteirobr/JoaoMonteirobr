@@ -171,7 +171,7 @@ async function openProof(row){
  try{
   var res=await request('/storage/v1/object/sign/comprovantes/'+path.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:authHeaders(session.access_token),body:JSON.stringify({expiresIn:300})});
   var raw=res&&(res.signedURL||res.signedUrl);if(!raw)throw new Error('Não foi possível autorizar a visualização do arquivo.');
-  var address=new URL(raw,SUPA_URL+'/storage/v1');if(address.origin!==new URL(SUPA_URL).origin)throw new Error('Endereço de comprovante inválido.');
+  var signed=raw.indexOf('http')===0?raw:SUPA_URL+'/storage/v1'+(raw.charAt(0)==='/'?raw:'/'+raw);var address=new URL(signed);if(address.origin!==new URL(SUPA_URL).origin)throw new Error('Endereço de comprovante inválido.');
   if(!overlay.isConnected)return;
   var viewer=inside('proofViewer');viewer.replaceChildren();
   var node=document.createElement(isPdf?'iframe':'img');
