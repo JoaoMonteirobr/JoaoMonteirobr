@@ -65,7 +65,7 @@ describe('Paridade de painel e comprovantes privados', () => {
     expect(adminMain.slice(0, consultaMenus.length)).toEqual(consultaMenus);
     expect(consultaMenus).toEqual([
       'Dashboard','Cadastros','Inquilinos','Contratos','Pagamentos','IPTU','Chamados',
-      'Financeiro','Repasses','Gastos','Documentos','Vistorias','Relatórios'
+      'Financeiro','Gastos','Relatórios'
     ]);
     expect(adminMain.slice(-2)).toEqual(['Acessos', 'Configurações']);
     expect(consultaMenus).not.toContain('Acessos');
