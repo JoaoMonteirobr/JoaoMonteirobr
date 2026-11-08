@@ -59,3 +59,16 @@
  .report-table tr{break-inside:avoid;page-break-inside:avoid}
  .report-proof-open{border:0;background:none;padding:0;color:#111;pointer-events:none}
 }
+
+/* Cadastro seguro do proprietário e navegação de consulta geral. */
+.access-control-grid{align-items:start}
+.access-control-grid>.panel{min-width:0}
+.access-control-grid .field{margin:12px 0}
+.access-control-grid .field[hidden]{display:none!important}
+.access-control-grid .field .lbl{display:block;margin-bottom:6px}
+.access-control-grid .field small{display:block;color:#60758a;font-size:11px;margin-top:5px;line-height:1.5}
+.access-control-grid #acc_msg{margin-top:12px}
+.access-control-grid .tablewrap{overflow-x:auto}
+.access-control-grid table td{vertical-align:middle}
+.access-readonly{font-size:12px;padding:8px 12px!important;white-space:nowrap;color:#3d5265}
+@media(max-width:840px){.access-control-grid{grid-template-columns:1fr!important}.access-control-grid .table{min-width:650px}.access-readonly{white-space:normal}}

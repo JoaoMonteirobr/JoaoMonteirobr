@@ -143,7 +143,7 @@ async function openFile(path){
 
 // ---------- Página ----------
 async function gastosPage(){
- var C=E('content');C.innerHTML='<div class="panel">Carregando gastos...</div>';
+ var C=E('content'),readOnly=currentRole!=='admin';C.innerHTML='<div class="panel">Carregando gastos...</div>';
  var D=await loadData(),label=L(),today=localToday();
  var periods=periodOptions(D.gastos,today);
  if(!S.period||!periods.some(function(p){return p.v===S.period}))S.period=today.slice(0,4);
@@ -162,10 +162,10 @@ async function gastosPage(){
    var t=D.tiposById[g.tipo_id],n=(anexosBy[g.id]||[]).length,where=g.escopo==='predio'?'Prédio inteiro':unitName(D.imById[g.imovel_id]);
    return '<button type="button" class="gx-row'+(S.sel===g.id?' sel':'')+'" data-gasto="'+esc(g.id)+'"><span class="gx-date">'+esc(dateBR(g.data).slice(0,5))+'</span><span class="gx-what"><b>'+esc(g.descricao)+'</b><small>'+esc(where)+'</small></span><span class="gx-tagcol"><span class="gx-tag">'+esc(t&&t.nome||'—')+'</span></span><span class="gx-val">'+money(g.valor)+'</span><span class="gx-clip">'+(n?'📎'+n:'')+'</span></button>';
   }).join('')+'</section>';
- }).join('')||'<div class="gx-empty">Nenhum gasto encontrado com esses filtros.<br><button type="button" class="btn primary" id="gxEmptyNew">+ Lançar gasto</button></div>';
+ }).join('')||'<div class="gx-empty">Nenhum gasto encontrado com esses filtros.'+(readOnly?'':'<br><button type="button" class="btn primary" id="gxEmptyNew">+ Lançar gasto</button>')+'</div>';
 
  C.innerHTML='<div class="gx">'
-  +'<div class="gx-head"><div><h2>Gastos</h2><p>Despesas com os imóveis, reparos e notas fiscais.</p></div><div class="gx-actions"><button type="button" class="btn secondary" id="gxTypes">🏷️ Tipos</button><button type="button" class="btn primary" id="gxNew">+ Novo gasto</button></div></div>'
+  +'<div class="gx-head"><div><h2>Gastos</h2><p>Despesas com os imóveis, reparos e notas fiscais.</p></div>'+(readOnly?'<div class="notice access-readonly">Somente consulta</div>':'<div class="gx-actions"><button type="button" class="btn secondary" id="gxTypes">🏷️ Tipos</button><button type="button" class="btn primary" id="gxNew">+ Novo gasto</button></div>')+'</div>'
   +'<div class="gx-filters"><select id="gxPeriod" class="inp" aria-label="Período">'+periods.map(function(p){return '<option value="'+esc(p.v)+'"'+(p.v===S.period?' selected':'')+'>'+esc(p.t)+'</option>'}).join('')+'</select><select id="gxPlace" class="inp" aria-label="Imóvel">'+placeOpts+'</select><div class="gx-chips">'+chips+'</div></div>'
   +'<div class="gx-summary"><div class="gx-card gx-total"><span>Total gasto · '+esc(periodLabel)+'</span><b>'+money(sum.total)+'</b></div><div class="gx-card"><span>Lançamentos</span><b>'+sum.count+(sum.count===1?' gasto':' gastos')+'</b></div><div class="gx-card"><span>Por tipo</span><div class="gx-bytype">'+byType+'</div></div></div>'
   +'<div class="gx-layout"><div>'+list+'</div><aside class="gx-detail" id="gxDetail"><div class="gx-empty-det">Escolha um gasto na lista para ver os detalhes e as notas fiscais.</div></aside></div>'
@@ -175,9 +175,9 @@ async function gastosPage(){
  E('gxPlace').onchange=function(){S.place=this.value;S.sel=null;gastosPage()};
  Array.prototype.forEach.call(C.querySelectorAll('[data-tipo]'),function(b){b.onclick=function(){S.tipo=b.dataset.tipo;S.sel=null;gastosPage()}});
  Array.prototype.forEach.call(C.querySelectorAll('[data-gasto]'),function(b){b.onclick=function(){S.sel=b.dataset.gasto;Array.prototype.forEach.call(C.querySelectorAll('.gx-row'),function(r){r.classList.toggle('sel',r===b)});showDetail(D,anexosBy,true)}});
- E('gxNew').onclick=function(){openGastoForm(D,null)};
+ if(E('gxNew'))E('gxNew').onclick=function(){openGastoForm(D,null)};
  if(E('gxEmptyNew'))E('gxEmptyNew').onclick=function(){openGastoForm(D,null)};
- E('gxTypes').onclick=function(){openTypes(D)};
+ if(E('gxTypes'))E('gxTypes').onclick=function(){openTypes(D)};
  if(S.sel&&items.some(function(g){return g.id===S.sel}))showDetail(D,anexosBy,false);
  else if(items.length&&window.innerWidth>760){S.sel=groups[0].items[0].id;C.querySelector('.gx-row').classList.add('sel');showDetail(D,anexosBy,false)}
 }
@@ -191,12 +191,12 @@ function showDetail(D,anexosBy,userAction){
   +'<dl>'+row('Data',dateBR(g.data))+row('Quem fez',g.fornecedor)+row('Pagamento',METHODS[g.forma_pagamento])+'</dl>'
   +(g.observacoes?'<div class="gx-note">'+esc(g.observacoes)+'</div>':'')
   +'<h4>Notas fiscais e fotos ('+files.length+')</h4>'
-  +(files.length?'<div class="gx-files">'+files.map(function(a){var pdf=String(a.arquivo_tipo||'').indexOf('pdf')>=0;return '<div class="gx-file"><button type="button" class="gx-open" data-open="'+esc(a.arquivo_path)+'"><i class="'+(pdf?'pdf':'img')+'">'+(pdf?'PDF':'IMG')+'</i><span>'+esc(a.arquivo_nome)+'</span></button><button type="button" class="gx-x" title="Remover arquivo" data-rm="'+esc(a.id)+'">×</button></div>'}).join('')+'</div>':'<p class="gx-muted">Nenhum arquivo anexado.</p>')
-  +'<div class="gx-foot"><button type="button" class="btn secondary" id="gxEdit">✏️ Editar / anexar</button><button type="button" class="btn secondary gx-danger" id="gxDel">Excluir</button></div>';
+  +(files.length?'<div class="gx-files">'+files.map(function(a){var pdf=String(a.arquivo_tipo||'').indexOf('pdf')>=0;return '<div class="gx-file"><button type="button" class="gx-open" data-open="'+esc(a.arquivo_path)+'"><i class="'+(pdf?'pdf':'img')+'">'+(pdf?'PDF':'IMG')+'</i><span>'+esc(a.arquivo_nome)+'</span></button>'+(currentRole==='admin'?'<button type="button" class="gx-x" title="Remover arquivo" data-rm="'+esc(a.id)+'">×</button>':'')+'</div>'}).join('')+'</div>':'<p class="gx-muted">Nenhum arquivo anexado.</p>')
+  +''+(currentRole==='admin'?'<div class="gx-foot"><button type="button" class="btn secondary" id="gxEdit">✏️ Editar / anexar</button><button type="button" class="btn secondary gx-danger" id="gxDel">Excluir</button></div>':'')+'';
  if(userAction)box.classList.add('open');
  E('gxBack').onclick=function(){box.classList.remove('open')};
- E('gxEdit').onclick=function(){openGastoForm(D,g)};
- E('gxDel').onclick=function(){deleteGasto(g,files)};
+ if(E('gxEdit'))E('gxEdit').onclick=function(){openGastoForm(D,g)};
+ if(E('gxDel'))E('gxDel').onclick=function(){deleteGasto(g,files)};
  Array.prototype.forEach.call(box.querySelectorAll('[data-open]'),function(b){b.onclick=function(){openFile(b.dataset.open)}});
  Array.prototype.forEach.call(box.querySelectorAll('[data-rm]'),function(b){b.onclick=async function(){
   var a=files.find(function(x){return x.id===b.dataset.rm});if(!a||!confirm('Remover o arquivo “'+a.arquivo_nome+'”?'))return;
@@ -297,7 +297,7 @@ var prevIcon=root.navIcon;navIcon=function(x){return x==='Gastos'?'▦':prevIcon
 var prevLoad=root.load;
 load=async function(){
  if(page==='Gastos'){
-  if(currentRole!=='admin'){page='Dashboard';return prevLoad.apply(this,arguments)}
+  if(currentRole!=='admin'&&currentRole!=='proprietario_consulta'){page='Dashboard';return prevLoad.apply(this,arguments)}
   try{return await gastosPage()}catch(e){E('content').innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}
   return;
  }
