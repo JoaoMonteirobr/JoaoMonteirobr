@@ -124,7 +124,7 @@
 .pay-clip{min-height:31px;padding:5px 8px;margin-left:6px;border-radius:7px;border:1px solid #c6dcec;background:#eff7fd;color:#18577e;font-weight:700;font-size:11px;white-space:nowrap}
 .pay-clip:hover{background:#dceefa}
 .proof-overlay{z-index:120;overflow-y:auto}
-.proof-dialog{display:flex;flex-direction:column;width:min(860px,100%);max-height:min(94vh,1000px);background:#fff;border-radius:18px;box-shadow:0 28px 85px #001c3459;overflow:hidden}
+.proof-dialog{display:flex;flex-direction:column;width:min(860px,100%);max-height:min(94vh,1000px);background:#fff;border-radius:18px;box-shadow:0 28px 85px #001c3459;overflow-x:hidden;overflow-y:auto}
 .proof-dialog-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:18px 22px;background:#0b3561;color:#fff;border-bottom:3px solid #e3b54a}
 .proof-dialog-head h2{font-size:19px;line-height:1.3;margin:4px 0 0}
 .proof-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#b7d5f2}
