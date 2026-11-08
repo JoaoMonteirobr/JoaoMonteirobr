@@ -298,7 +298,5 @@ load=async function(){
 // Define os ícones usados no menu lateral simplificado.
 // Expõe o agrupamento por endereço para outras telas (ex.: Gastos) usarem o mesmo critério.
 window.MatosLocation={key:locationKey,label:locationLabel,category:unitCategory};
-var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Cadastros':'＋','Contratos':'▤','Pagamentos':';return m[x]||oldIcon(x)};window.navIcon=navIcon;
-})();
-,'IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Acessos':'♙','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
+var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Cadastros':'＋','Contratos':'▤','Pagamentos':'$','IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Acessos':'♙','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
 })();
