@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
-import { corsHeaders, json, readJson } from '../_shared/http.ts';
+import { corsHeaders, json, readJson } from './http.ts';
 
 const ACCOUNT_MAX_ATTEMPTS = 5;
 const IP_MAX_ATTEMPTS = 20;
