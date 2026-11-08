@@ -72,3 +72,23 @@
 .access-control-grid table td{vertical-align:middle}
 .access-readonly{font-size:12px;padding:8px 12px!important;white-space:nowrap;color:#3d5265}
 @media(max-width:840px){.access-control-grid{grid-template-columns:1fr!important}.access-control-grid .table{min-width:650px}.access-readonly{white-space:normal}}
+
+/* Configurações: navegação real, com os eventos dos cadastros preservados. */
+.settings-card{transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
+.settings-card:focus-visible{outline:3px solid #2781d9;outline-offset:3px}
+.settings-card:hover{box-shadow:0 10px 24px #10294516}
+.settings-card span{font-size:12px;line-height:1.45;max-width:90%}
+.settings-hint{font-size:12px;line-height:1.5;margin-top:16px}
+.settings-subnav{display:flex;align-items:center;justify-content:flex-start;background:#fff;border:1px solid #dce6f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;box-shadow:0 4px 15px #1029450a}
+.settings-subnav-heading{display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.settings-subnav .btn{min-height:38px;white-space:nowrap}
+.settings-crumb{color:#4e6480;font-size:12px}
+.settings-crumb span{color:#8496aa;margin:0 7px}
+.settings-crumb b{color:#153f69}
+@media(max-width:620px){
+ .settings-subnav{padding:12px}
+ .settings-subnav-heading,.settings-subnav .btn{width:100%}
+ .settings-subnav .btn{justify-content:center}
+ .settings-card{min-height:95px}
+}
+@media print{.settings-subnav,.settings-hint{display:none!important}}
