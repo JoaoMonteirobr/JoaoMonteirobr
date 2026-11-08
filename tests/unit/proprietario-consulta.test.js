@@ -38,7 +38,7 @@ describe('proprietário · consulta geral com telefone e senha', () => {
     expect(admin).not.toContain('serviceRole:');
     expect(access).toContain('data-owner-reset');
     expect(access).toContain('id="acc_phone"');
-    expect(access).toContain("role:'proprietario_consulta'");
+    expect(access).toContain('value="proprietario_consulta"');
   });
 
   it('limita a consulta geral a um novo papel separado do proprietário comum', () => {
