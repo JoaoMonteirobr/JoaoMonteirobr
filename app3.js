@@ -41,7 +41,7 @@ async function accesses(){
   try{
    await request('/functions/v1/admin-create-user',{method:'POST',headers:authHeaders(session.access_token),body:JSON.stringify(body)});
    E('acc_pass').value='';cache.perfis=null;msg.innerHTML='<div class="notice success">Acesso criado. O proprietário já pode usar o celular cadastrado e a senha inicial para entrar.</div>';
-   setTimeout(function(){accesses()},1000)
+   setTimeout(function(){if(page==='Acessos')load()},1000)
   }catch(error){msg.innerHTML='<div class="notice err">'+esc(error.message||'Falha ao criar acesso.')+'</div>'}
   finally{btn.disabled=false}
  };
