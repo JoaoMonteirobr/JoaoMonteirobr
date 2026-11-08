@@ -4,7 +4,7 @@
 // Define os menus visíveis para cada perfil de usuário.
 // Mesma navegação operacional para administrador e proprietário de consulta geral.
 // A diferença é a permissão: somente o administrador recebe ações de escrita.
-var consultaMenus=['Dashboard','Cadastros','Inquilinos','Contratos','Pagamentos','IPTU','Chamados','Financeiro','Repasses','Gastos','Documentos','Vistorias','Relatórios'];
+var consultaMenus=['Dashboard','Cadastros','Inquilinos','Contratos','Pagamentos','IPTU','Chamados','Financeiro','Gastos','Relatórios'];
 var adminMain=consultaMenus.concat(['Acessos','Configurações']);
 var ownerMain=['Dashboard','Pagamentos','IPTU','Chamados','Relatórios'];
 var tenantMain=['Dashboard','Pagamentos','IPTU','Chamados'];
@@ -412,6 +412,7 @@ var originalLoad=window.load||load;
 load=async function(){
  var C=E('content');if(!C)return;
  try{
+  if(isMatosSectionPaused(page)){page='Dashboard';return shell()}
   if(settingsActive&&page===settingsActive&&currentRole==='admin')return renderSettingsSection();
   if(page==='Dashboard')return simpleDash();
   if(page==='Cadastros'&&(currentRole==='admin'||currentRole==='proprietario_consulta'))return cadastrosPage();
