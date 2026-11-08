@@ -276,15 +276,67 @@ async function simpleReports(){
 }
 
 // Centraliza cadastros técnicos e configurações administrativas.
+// Os cartões de Configurações usam o módulo vivo, nunca uma cópia de innerHTML:
+// copiar HTML descarta eventos de pesquisa, edição, exclusão e formulários.
+var settingsSections=['Imóveis','Inquilinos','Contratos','Proprietários','Acessos'];
+var settingsActive=null;
+var settingsRenderId=0;
+var settingsCards=[
+ ['Imóveis','Endereços, valores-base, ocupação e vínculo com proprietários','building-2'],
+ ['Inquilinos','Dados dos locatários, contatos e documentos','users'],
+ ['Contratos','Prazos, reajustes, garantias e valores','file-text'],
+ ['Proprietários','Dados cadastrais, telefone, repasses e contato','user-round'],
+ ['Acessos','Login por telefone ou e-mail, permissões e senhas','shield-check']
+];
 async function settingsHub(){
- E('content').innerHTML='<div class="simple-toolbar"><div><h2>Configurações e cadastros</h2><p>Dados estruturais ficam aqui e não ocupam o menu do dia a dia.</p></div></div><div class="settings-grid">'+[['Imóveis','Endereços, valores-base e situação'],['Inquilinos','Dados e contatos dos locatários'],['Contratos','Vínculos, valores e vencimentos'],['Proprietários','Cadastros dos proprietários'],['Acessos','Usuários e permissões']].map(function(x){return '<button class="settings-card" data-config="'+x[0]+'"><b>'+x[0]+'</b><span>'+x[1]+'</span><i>→</i></button>'}).join('')+'</div><div id="settingsDetail"></div>';
- Array.prototype.forEach.call(document.querySelectorAll('[data-config]'),function(b){b.onclick=async function(){if(b.dataset.config==='Acessos'){goQuick('Acessos');return}page=b.dataset.config;await modulePage();var html=E('content').innerHTML;page='Configurações';E('settingsDetail').innerHTML='<div class="settings-detail"><button id="backSettings" class="linkmini">← Voltar aos cadastros</button>'+html+'</div>';E('backSettings').onclick=settingsHub}})
+ if(currentRole!=='admin'){E('content').innerHTML='<div class="notice err">Configurações disponíveis somente para administradores.</div>';return}
+ settingsActive=null;page='Configurações';
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Configurações e cadastros</h2><p>Gerencie os dados estruturais e os acessos do Matos.</p></div></div>'
+  +'<div class="settings-grid">'+settingsCards.map(function(item){
+   return '<button type="button" class="settings-card" data-config="'+esc(item[0])+'" aria-label="Abrir '+esc(item[0])+'"><b>'+esc(item[0])+'</b><span>'+esc(item[1])+'</span><i aria-hidden="true">→</i></button>'
+  }).join('')+'</div><p class="muted settings-hint">Selecione uma área para consultar, cadastrar ou editar. Todas as alterações permanecem protegidas pelo seu acesso de administrador.</p>';
+ Array.prototype.forEach.call(E('content').querySelectorAll('[data-config]'),function(button){
+  button.onclick=function(){openSettingsSection(button.dataset.config)}
+ })
 }
+async function openSettingsSection(section){
+ if(currentRole!=='admin'||settingsSections.indexOf(section)<0)return;
+ settingsActive=section;page=section;await load();
+}
+async function renderSettingsSection(){
+ if(currentRole!=='admin'||settingsSections.indexOf(settingsActive)<0)return settingsHub();
+ var section=settingsActive,ticket=++settingsRenderId,C=E('content');
+ if(!C)return;
+ C.innerHTML='<div class="panel">Carregando '+esc(section)+'...</div>';
+ try{
+  if(section==='Acessos')await accesses();
+  else await modulePage();
+  if(settingsActive!==section||page!==section||ticket!==settingsRenderId||E('content')!==C)return;
+  var toolbar=document.createElement('div');
+  toolbar.className='settings-subnav';
+  toolbar.innerHTML='<div class="settings-subnav-heading"><button type="button" id="backSettings" class="btn secondary">← Todas as configurações</button><span class="settings-crumb">Configurações <span aria-hidden="true">/</span> <b>'+esc(section)+'</b></span></div>';
+  C.insertBefore(toolbar,C.firstChild);
+  E('backSettings').onclick=function(){settingsActive=null;page='Configurações';shell()};
+ }catch(error){
+  if(settingsActive!==section||ticket!==settingsRenderId)return;
+  C.innerHTML='<div class="settings-subnav"><button id="backSettings" class="btn secondary" type="button">← Todas as configurações</button></div><div class="notice err">Não foi possível carregar '+esc(section)+': '+esc(error.message)+'</div><button id="retrySettings" class="btn secondary" type="button">Tentar novamente</button>';
+  E('backSettings').onclick=function(){settingsActive=null;page='Configurações';shell()};
+  E('retrySettings').onclick=function(){load()}
+ }
+}
+window.MatosSettings={
+ sections:settingsSections.slice(),
+ open:openSettingsSection,
+ home:function(){settingsActive=null;page='Configurações';shell()},
+ getActive:function(){return settingsActive}
+};
+
 // Guarda o carregador original e direciona as novas telas sem apagar funções legadas.
 var originalLoad=window.load||load;
 load=async function(){
  var C=E('content');if(!C)return;
  try{
+  if(settingsActive&&page===settingsActive&&currentRole==='admin')return renderSettingsSection();
   if(page==='Dashboard')return simpleDash();
   if(page==='Cadastros'&&(currentRole==='admin'||currentRole==='proprietario_consulta'))return cadastrosPage();
   if(page==='Contratos'&&(currentRole==='admin'||currentRole==='proprietario_consulta'))return contractsPage();
@@ -295,6 +347,11 @@ load=async function(){
   return originalLoad.apply(this,arguments)
  }catch(e){C.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}
 };window.load=load;
+// Ao sair desta área pelo menu lateral ou por um atalho, descarte o contexto.
+// Dentro da área, o carregador acima mantém o formulário vivo ao salvar ou excluir.
+var settingsPreviousShell=window.shell||shell;
+shell=function(){settingsActive=null;settingsRenderId++;return settingsPreviousShell.apply(this,arguments)};
+window.shell=shell;
 // Define os ícones usados no menu lateral simplificado.
 // Expõe o agrupamento por endereço para outras telas (ex.: Gastos) usarem o mesmo critério.
 window.MatosLocation={key:locationKey,label:locationLabel,category:unitCategory};
