@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
+import path from 'node:path';
 import vm from 'node:vm';
 
 describe('comprovantes nos pagamentos e PDF mensal', () => {
-  const ui = fs.readFileSync(new URL('../../simple-ui.js', import.meta.url), 'utf8');
-  const report = fs.readFileSync(new URL('../../monthly-report-pdf.js', import.meta.url), 'utf8');
-  const index = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  const ui = fs.readFileSync(path.join(process.cwd(), 'simple-ui.js'), 'utf8');
+  const report = fs.readFileSync(path.join(process.cwd(), 'monthly-report-pdf.js'), 'utf8');
+  const index = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
 
   function moduleForTest() {
     const ctx = { window: {} };
