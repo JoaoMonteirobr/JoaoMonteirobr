@@ -244,12 +244,36 @@ async function callsPage(){
  Array.prototype.forEach.call(document.querySelectorAll('[data-call]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.id===b.dataset.call});openForm('Manutenção',r)}})
 }
 // Gera a visão mensal de pagos e pendentes, pronta para impressão/PDF.
-async function simpleReports(){
- var k=window._simpleReportMonth||isoMonth(),rows=await ledgerData(k);window._simpleReportMonth=k;var paid=rows.filter(function(r){return r.status==='pago'}),pending=rows.filter(function(r){return r.status==='pendente'});
- function sec(title,list,kind){return '<div class="panel simple-panel report-section"><div class="panel-title"><h3>'+title+'</h3><span class="badge '+(kind==='ok'?'green':'red')+'">'+list.length+'</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th></tr></thead><tbody>'+(paymentRows(list,false)||'<tr><td colspan="6" class="empty">Nenhum registro.</td></tr>')+'</tbody></table></div></div>'}
- E('content').innerHTML='<div id="printArea"><div class="simple-toolbar"><div><h2>Relatório mensal</h2><p>Relação objetiva para conferência e cobrança.</p></div><div class="report-actions">'+monthPicker('simpleReportMonth',k)+'<button id="simplePrint" class="btn secondary">Imprimir / PDF</button></div></div>'+summaryCards(rows)+sec('Pagos',paid,'ok')+sec('Pendentes',pending,'bad')+'</div>';
- E('simpleReportMonth').onchange=function(){window._simpleReportMonth=this.value;simpleReports()};E('simplePrint').onclick=function(){window.print()}
+function reportPaymentRows(list,proofNumbers){
+ return list.map(function(r){
+  var charge=r.charge||{},code=charge.id&&proofNumbers[charge.id];
+  return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+'</td><td>'+st(r.status)+'</td><td>'+(code?'<button type="button" class="report-proof-open" data-proof="'+esc(charge.comprovante_path)+'" title="Abrir comprovante">Anexo '+esc(code)+'</button>':'<span class="muted">Não anexado</span>')+'</td></tr>'
+ }).join('')
 }
+async function simpleReports(){
+ var k=window._simpleReportMonth||isoMonth(),rows=await ledgerData(k);window._simpleReportMonth=k;
+ var paid=rows.filter(function(r){return r.status==='pago'}),pending=rows.filter(function(r){return r.status==='pendente'});
+ var files=rows.filter(function(r){return r.charge&&r.charge.id&&r.charge.comprovante_path}),numbers={};
+ files.forEach(function(r,i){numbers[r.charge.id]=String(i+1).padStart(2,'0')});
+ function sec(title,list,kind){
+  return '<div class="panel simple-panel report-section"><div class="panel-title"><h3>'+title+'</h3><span class="badge '+(kind==='ok'?'green':'red')+'">'+list.length+'</span></div><div class="tablewrap"><table class="table report-table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th><th>Comprovante</th></tr></thead><tbody>'+(reportPaymentRows(list,numbers)||'<tr><td colspan="7" class="empty">Nenhum registro.</td></tr>')+'</tbody></table></div></div>'
+ }
+ E('content').innerHTML='<div id="printArea"><div class="simple-toolbar"><div><h2>Relatório mensal</h2><p>Competência '+esc(k)+' · pagamentos e comprovantes vinculados.</p></div><div class="report-actions"><div class="report-export-controls">'+monthPicker('simpleReportMonth',k)+'<button id="simplePrint" class="btn primary" type="button">Baixar PDF completo com anexos</button><button id="simplePrintTable" class="btn secondary" type="button">Imprimir somente tabela</button></div></div></div>'+summaryCards(rows)+'<div class="report-proof-legend">Comprovantes anexados: <b>'+files.length+'</b>. O PDF completo incorpora fotos e todas as páginas dos comprovantes em PDF, vinculados ao pagamento correspondente.</div><div id="reportExportStatus" class="report-export-status" role="status" aria-live="polite"></div>'+sec('Pagos',paid,'ok')+sec('Pendentes',pending,'bad')+'</div>';
+ E('simpleReportMonth').onchange=function(){window._simpleReportMonth=this.value;simpleReports()};
+ E('simplePrintTable').onclick=function(){window.print()};
+ E('simplePrint').onclick=async function(){
+  var btn=this,msg=E('reportExportStatus');btn.disabled=true;
+  try{
+   if(!window.MatosMonthlyReport||!window.MatosMonthlyReport.export)throw new Error('O módulo de relatório não foi carregado. Atualize a página.');
+   msg.textContent='Montando o PDF mensal...';
+   await window.MatosMonthlyReport.export(k,rows,function(at,total){msg.textContent='Incorporando comprovante '+at+' de '+total+'...'});
+   msg.textContent='PDF completo gerado para download.';
+  }catch(e){msg.textContent='Não foi possível gerar o relatório completo: '+e.message}
+  finally{btn.disabled=false}
+ };
+ Array.prototype.forEach.call(document.querySelectorAll('.report-proof-open'),function(b){b.onclick=function(){openProof(b.dataset.proof)}})
+}
+
 // Centraliza cadastros técnicos e configurações administrativas.
 async function settingsHub(){
  E('content').innerHTML='<div class="simple-toolbar"><div><h2>Configurações e cadastros</h2><p>Dados estruturais ficam aqui e não ocupam o menu do dia a dia.</p></div></div><div class="settings-grid">'+[['Imóveis','Endereços, valores-base e situação'],['Inquilinos','Dados e contatos dos locatários'],['Contratos','Vínculos, valores e vencimentos'],['Proprietários','Cadastros dos proprietários'],['Acessos','Usuários e permissões']].map(function(x){return '<button class="settings-card" data-config="'+x[0]+'"><b>'+x[0]+'</b><span>'+x[1]+'</span><i>→</i></button>'}).join('')+'</div><div id="settingsDetail"></div>';
