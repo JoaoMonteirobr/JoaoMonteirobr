@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-['Documentos','Vistorias'].forEach(function(x){if(adminMenus.indexOf(x)<0)adminMenus.push(x);if(ownerMenus.indexOf(x)<0)ownerMenus.push(x);if(tenantMenus.indexOf(x)<0)tenantMenus.push(x)});
+['Documentos','Vistorias'].forEach(function(x){if(isMatosSectionPaused(x))return;if(adminMenus.indexOf(x)<0)adminMenus.push(x);if(ownerMenus.indexOf(x)<0)ownerMenus.push(x);if(tenantMenus.indexOf(x)<0)tenantMenus.push(x)});
 
 var docCats=['Contrato','Vistoria','IPTU','Comprovante','Documento do imóvel','Seguro','Laudo','Foto','Outro'];
 var vistTipos={entrada:'Entrada',saida:'Saída',periodica:'Periódica',manutencao:'Manutenção'};
@@ -71,5 +71,5 @@ async function adicionarItemVistoria(id){var msg=E('vi_msg'),com=E('vi_comodo').
 async function concluirVistoria(id){if(!confirm('Concluir esta vistoria? Depois disso ela ficará somente para consulta.'))return;try{await dbUpdate('vistorias',id,{status:'concluida'});abrirVistoria(id)}catch(e){alert(e.message)}}
 
 var oldLoad=window.load;
-window.load=async function(){if(page==='Documentos')return documentosPage();if(page==='Vistorias')return vistoriasPage();return oldLoad()};
+window.load=async function(){if(isMatosSectionPaused(page)){page='Dashboard';return shell()}if(page==='Documentos')return documentosPage();if(page==='Vistorias')return vistoriasPage();return oldLoad()};
 })();
