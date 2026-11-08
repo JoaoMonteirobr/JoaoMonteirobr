@@ -2,10 +2,11 @@
 'use strict';
 
 // Define os menus visíveis para cada perfil de usuário.
-var adminMain=['Dashboard','Cadastros','Contratos','Pagamentos','IPTU','Chamados','Relatórios','Configurações'];
+var adminMain=['Dashboard','Cadastros','Contratos','Pagamentos','IPTU','Chamados','Relatórios','Acessos','Configurações'];
 var ownerMain=['Dashboard','Pagamentos','IPTU','Chamados','Relatórios'];
 var tenantMain=['Dashboard','Pagamentos','IPTU','Chamados'];
 adminMenus=adminMain; ownerMenus=ownerMain; tenantMenus=tenantMain;
+consultaMenus=['Dashboard','Cadastros','Inquilinos','Contratos','Pagamentos','IPTU','Chamados','Financeiro','Repasses','Gastos','Documentos','Vistorias','Relatórios'];
 // Liga cada tela simplificada à tabela correspondente no banco.
 tables.Pagamentos='cobrancas'; tables.Chamados='manutencoes'; tables.Cadastros='imoveis';
 // Funções auxiliares para competência mensal, vencimentos e contratos ativos.
@@ -191,8 +192,8 @@ async function cadastrosPage(){
   }).join('');
   return '<section class="panel simple-panel property-address-group"><div class="panel-title"><h3>'+esc(group.label)+'</h3><span class="muted">'+groupCount(group)+' unidades</span></div>'+sections+'</section>'
  }).join('');
- E('content').innerHTML='<div class="simple-toolbar"><div><h2>Cadastros</h2><p>Imóveis agrupados por endereço, apartamentos e unidades comerciais.</p></div><button id="newProperty" class="btn primary">+ Cadastrar imóvel</button></div>'+(panels||'<div class="panel simple-panel"><div class="empty">Nenhum imóvel cadastrado.</div></div>');
- E('newProperty').onclick=function(){openPropertyRegistration(inqs)}
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Cadastros</h2><p>Imóveis agrupados por endereço, apartamentos e unidades comerciais.</p></div>'+(currentRole==='admin'?'<button id="newProperty" class="btn primary">+ Cadastrar imóvel</button>':'<span class="notice access-readonly">Somente consulta</span>')+'</div>'+(panels||'<div class="panel simple-panel"><div class="empty">Nenhum imóvel cadastrado.</div></div>');
+ if(E('newProperty'))E('newProperty').onclick=function(){openPropertyRegistration(inqs)}
 }
 // Abre o cadastro integrado: imóvel e, se ocupado, dados obrigatórios do inquilino.
 function openPropertyRegistration(existingTenants,presetTenantId){
@@ -215,8 +216,8 @@ function openPropertyRegistration(existingTenants,presetTenantId){
 async function contractsPage(){
  await Promise.all([dbGet('contratos'),dbGet('imoveis'),dbGet('inquilinos')]);var cs=cache.contratos||[],ims=cache.imoveis||[],inqs=cache.inquilinos||[];
  var rows=cs.map(function(c){var im=ims.find(function(x){return x.id===c.imovel_id}),t=inqs.find(function(x){return x.id===c.inquilino_id}),d=daysUntil(c.data_fim),badge=d<0?'<span class="badge red">Vencido</span>':d<=60?'<span class="badge yellow">'+d+' dias</span>':st(c.status);return '<tr><td><b>'+esc(im&&im.nome||'—')+'</b></td><td>'+esc(t&&t.nome||'—')+'</td><td>'+dateBR(c.data_inicio)+'</td><td>'+dateBR(c.data_fim)+'</td><td>'+money(c.aluguel_atual)+'</td><td>'+badge+'</td></tr>'}).join('');
- E('content').innerHTML='<div class="simple-toolbar"><div><h2>Contratos</h2><p>Cadastre e acompanhe os prazos dos contratos vinculados aos imóveis.</p></div><button id="newContract" class="btn primary">+ Novo contrato</button></div><div class="notice contract-notice">O sistema gera aviso automático quando faltarem <b>60 dias</b> para o término de um contrato ativo.</div><div class="panel simple-panel"><div class="tablewrap"><table class="table"><thead><tr><th>Imóvel</th><th>Inquilino</th><th>Início</th><th>Término</th><th>Aluguel</th><th>Situação / prazo</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="empty">Nenhum contrato cadastrado.</td></tr>')+'</tbody></table></div></div>';
- E('newContract').onclick=function(){openContractRegistration(ims,inqs)}
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Contratos</h2><p>Cadastre e acompanhe os prazos dos contratos vinculados aos imóveis.</p></div>'+(currentRole==='admin'?'<button id="newContract" class="btn primary">+ Novo contrato</button>':'<span class="notice access-readonly">Somente consulta</span>')+'</div><div class="notice contract-notice">O sistema gera aviso automático quando faltarem <b>60 dias</b> para o término de um contrato ativo.</div><div class="panel simple-panel"><div class="tablewrap"><table class="table"><thead><tr><th>Imóvel</th><th>Inquilino</th><th>Início</th><th>Término</th><th>Aluguel</th><th>Situação / prazo</th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="empty">Nenhum contrato cadastrado.</td></tr>')+'</tbody></table></div></div>';
+ if(E('newContract'))E('newContract').onclick=function(){openContractRegistration(ims,inqs)}
 }
 // Cria um contrato usando o imóvel ocupado e seu inquilino já vinculado.
 function openContractRegistration(ims,inqs){
@@ -232,7 +233,7 @@ function openContractRegistration(ims,inqs){
 // Resume pagamentos, pendências, chamados e contratos próximos do término.
 async function simpleDash(){
  var k=window._simpleMonth||isoMonth(),rows=await ledgerData(k),maint=await dbGet('manutencoes'),open=(maint||[]).filter(function(x){return ['concluido','cancelado'].indexOf(x.status)<0}).length,contracts=cache.contratos||[],ims=cache.imoveis||[],inqs=cache.inquilinos||[],ending=contracts.filter(function(x){var d=daysUntil(x.data_fim);return x.status==='ativo'&&d>=0&&d<=60}).sort(function(a,b){return String(a.data_fim).localeCompare(String(b.data_fim))});window._simpleMonth=k;
- E('content').innerHTML='<div class="simple-toolbar"><div><h2>Visão geral</h2><p>Acompanhe recebimentos, pendências e operação em um único lugar.</p></div>'+monthPicker('dashMonth',k)+'</div>'+summaryCards(rows)+overview2026()+'<div class="simple-grid"><div class="panel simple-panel"><div class="panel-title"><h3>Pendências que precisam de atenção</h3><button class="linkmini" onclick="goQuick(\'Pagamentos\')">Ver pagamentos →</button></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Pendente</th></tr></thead><tbody>'+rows.filter(function(r){return r.status==='pendente'}).slice(0,8).map(function(r){return '<tr><td>'+esc(r.tenant&&r.tenant.nome||'—')+'</td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td><b>'+money(r.pending)+'</b></td></tr>'}).join('')+'</tbody></table></div></div><div class="panel simple-panel action-panel"><h3>Operação</h3><button onclick="goQuick(\'Pagamentos\')"><b>Informar pagamento</b><span>Registrar recebimento de aluguel</span></button><button onclick="goQuick(\'IPTU\')"><b>IPTU</b><span>Valores e referências anuais</span></button><button onclick="goQuick(\'Chamados\')"><b>Chamados <em>'+open+'</em></b><span>Acompanhar solicitações dos inquilinos</span></button><button onclick="goQuick(\'Relatórios\')"><b>Relatório mensal</b><span>Pagos e pendentes para cobrança</span></button></div></div>';
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Visão geral</h2><p>Acompanhe recebimentos, pendências e operação em um único lugar.</p></div>'+monthPicker('dashMonth',k)+'</div>'+summaryCards(rows)+overview2026()+'<div class="simple-grid"><div class="panel simple-panel"><div class="panel-title"><h3>Pendências que precisam de atenção</h3><button class="linkmini" onclick="goQuick(\'Pagamentos\')">Ver pagamentos →</button></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Pendente</th></tr></thead><tbody>'+rows.filter(function(r){return r.status==='pendente'}).slice(0,8).map(function(r){return '<tr><td>'+esc(r.tenant&&r.tenant.nome||'—')+'</td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td><b>'+money(r.pending)+'</b></td></tr>'}).join('')+'</tbody></table></div></div><div class="panel simple-panel action-panel"><h3>Operação</h3>'+(currentRole==='admin'?'<button onclick="goQuick(\'Pagamentos\')"><b>Informar pagamento</b><span>Registrar recebimento de aluguel</span></button>':'<button onclick="goQuick(\'Pagamentos\')"><b>Consultar pagamentos</b><span>Ver valores e comprovantes</span></button>')+'<button onclick="goQuick(\'IPTU\')"><b>IPTU</b><span>Valores e referências anuais</span></button><button onclick="goQuick(\'Chamados\')"><b>Chamados <em>'+open+'</em></b><span>Acompanhar solicitações dos inquilinos</span></button><button onclick="goQuick(\'Relatórios\')"><b>Relatório mensal</b><span>Pagos e pendentes para cobrança</span></button></div></div>';
  E('content').insertAdjacentHTML('beforeend','<div class="panel simple-panel contract-dashboard"><div class="panel-title"><h3>Contratos próximos do término</h3><button class="linkmini" onclick="goQuick(\'Contratos\')">Ver contratos →</button></div><p class="muted">Avisos exibidos com 60 dias de antecedência.</p><div class="tablewrap"><table class="table"><thead><tr><th>Imóvel</th><th>Inquilino</th><th>Término</th><th>Prazo</th></tr></thead><tbody>'+(ending.map(function(ct){var im=ims.find(function(x){return x.id===ct.imovel_id}),t=inqs.find(function(x){return x.id===ct.inquilino_id}),d=daysUntil(ct.data_fim);return '<tr><td>'+esc(im&&im.nome||'—')+'</td><td>'+esc(t&&t.nome||'—')+'</td><td><b>'+dateBR(ct.data_fim)+'</b></td><td><span class="badge yellow">'+d+' dias</span></td></tr>'}).join('')||'<tr><td colspan="4" class="empty">Nenhum contrato termina nos próximos 60 dias.</td></tr>')+'</tbody></table></div></div>');E('dashMonth').onchange=function(){window._simpleMonth=this.value;simpleDash()}
 }
 // Exibe os chamados de manutenção e solicitações dos inquilinos.
@@ -277,7 +278,7 @@ async function simpleReports(){
 // Centraliza cadastros técnicos e configurações administrativas.
 async function settingsHub(){
  E('content').innerHTML='<div class="simple-toolbar"><div><h2>Configurações e cadastros</h2><p>Dados estruturais ficam aqui e não ocupam o menu do dia a dia.</p></div></div><div class="settings-grid">'+[['Imóveis','Endereços, valores-base e situação'],['Inquilinos','Dados e contatos dos locatários'],['Contratos','Vínculos, valores e vencimentos'],['Proprietários','Cadastros dos proprietários'],['Acessos','Usuários e permissões']].map(function(x){return '<button class="settings-card" data-config="'+x[0]+'"><b>'+x[0]+'</b><span>'+x[1]+'</span><i>→</i></button>'}).join('')+'</div><div id="settingsDetail"></div>';
- Array.prototype.forEach.call(document.querySelectorAll('[data-config]'),function(b){b.onclick=async function(){page=b.dataset.config;await modulePage();var html=E('content').innerHTML;page='Configurações';E('settingsDetail').innerHTML='<div class="settings-detail"><button id="backSettings" class="linkmini">← Voltar aos cadastros</button>'+html+'</div>';E('backSettings').onclick=settingsHub}})
+ Array.prototype.forEach.call(document.querySelectorAll('[data-config]'),function(b){b.onclick=async function(){if(b.dataset.config==='Acessos'){goQuick('Acessos');return}page=b.dataset.config;await modulePage();var html=E('content').innerHTML;page='Configurações';E('settingsDetail').innerHTML='<div class="settings-detail"><button id="backSettings" class="linkmini">← Voltar aos cadastros</button>'+html+'</div>';E('backSettings').onclick=settingsHub}})
 }
 // Guarda o carregador original e direciona as novas telas sem apagar funções legadas.
 var originalLoad=window.load||load;
@@ -285,8 +286,8 @@ load=async function(){
  var C=E('content');if(!C)return;
  try{
   if(page==='Dashboard')return simpleDash();
-  if(page==='Cadastros'&&currentRole==='admin')return cadastrosPage();
-  if(page==='Contratos'&&currentRole==='admin')return contractsPage();
+  if(page==='Cadastros'&&(currentRole==='admin'||currentRole==='proprietario_consulta'))return cadastrosPage();
+  if(page==='Contratos'&&(currentRole==='admin'||currentRole==='proprietario_consulta'))return contractsPage();
   if(page==='Pagamentos')return paymentsPage();
   if(page==='Chamados')return callsPage();
   if(page==='Relatórios')return simpleReports();
@@ -297,5 +298,7 @@ load=async function(){
 // Define os ícones usados no menu lateral simplificado.
 // Expõe o agrupamento por endereço para outras telas (ex.: Gastos) usarem o mesmo critério.
 window.MatosLocation={key:locationKey,label:locationLabel,category:unitCategory};
-var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Cadastros':'＋','Contratos':'▤','Pagamentos':'$','IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
+var oldIcon=window.navIcon||navIcon;navIcon=function(x){var m={'Dashboard':'⌂','Cadastros':'＋','Contratos':'▤','Pagamentos':';return m[x]||oldIcon(x)};window.navIcon=navIcon;
+})();
+,'IPTU':'⌑','Chamados':'◇','Relatórios':'▥','Acessos':'♙','Configurações':'⚙'};return m[x]||oldIcon(x)};window.navIcon=navIcon;
 })();
