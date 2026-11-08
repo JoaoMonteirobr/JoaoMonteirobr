@@ -126,7 +126,7 @@ function download(bytes,k){
 async function exportReport(k,rows,progress){
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(k))throw new Error('Competência mensal inválida.');
  var lib=await loadPdfLib(),doc=await lib.PDFDocument.create(),pal=createPalette(lib);
- doc.setTitle('Matos - Relatório mensal '+k);doc.setAuthor('Matos - Gestão de Aluguéis');
+ doc.setTitle('Matos - Relatório mensal '+k+' com comprovantes');doc.setAuthor('Matos - Gestão de Aluguéis');
  var normal=await doc.embedFont(lib.StandardFonts.Helvetica),bold=await doc.embedFont(lib.StandardFonts.HelveticaBold);
  var entries=proofEntries(rows),byId={};entries.forEach(function(e){byId[e.row.charge.id]=e.number});
  var paid=rows.filter(function(r){return r.status==='pago'}),pending=rows.filter(function(r){return r.status!=='pago'});
@@ -152,10 +152,12 @@ async function exportReport(k,rows,progress){
  }
  newPage();
  bar('Previsto',0,pal.gold);bar('Recebido',1,pal.green);bar('Pendente',2,pal.red);y-=75;
- text(rows.length+' locações  |  '+paid.length+' pagas  |  '+pending.length+' pendentes  |  '+entries.length+' comprovantes',margin,y,9,normal,pal.muted);
+ text(rows.length+' locações  |  '+paid.length+' pagas  |  '+pending.length+' pendentes  |  '+entries.length+' comprovantes privados',margin,y,9,normal,pal.muted);
  y-=26;
- var cols=[{title:'INQUILINO',width:179},{title:'IMÓVEL',width:195},{title:'VENCIMENTO',width:78},
-  {title:'PREVISTO',width:81},{title:'RECEBIDO',width:81},{title:'SITUAÇÃO',width:69},{title:'ANEXO',width:95}];
+ // 777 pt cabem na largura útil do A4 em paisagem. Incluir data real, nunca presumida.
+ var cols=[{title:'INQUILINO',width:151},{title:'IMÓVEL',width:144},{title:'VENCIMENTO',width:69},
+  {title:'PREVISTO',width:72},{title:'RECEBIDO',width:72},{title:'PAGO EM',width:79},
+  {title:'SITUAÇÃO',width:65},{title:'COMPROVANTE',width:125}];
  var rowsize=31;
  function tableHeading(){
   var x=margin;
@@ -175,13 +177,17 @@ async function exportReport(k,rows,progress){
    var x=margin,bg=i%2===0?pal.soft:pal.white;
    page.drawRectangle({x:margin,y:y-rowsize,width:w-2*margin,height:rowsize,color:bg});
    var values=[r.tenant&&r.tenant.nome||'—',r.property&&r.property.nome||'—',dateBR(r.due),
-    moneyN(r.expected),moneyN(r.paid),r.status==='pago'?'Pago':'Pendente',r.charge&&byId[r.charge.id]?'Anexo '+byId[r.charge.id]:'—'];
+    moneyN(r.expected),moneyN(r.paid),r.charge&&r.charge.data_pagamento?dateBR(r.charge.data_pagamento):'Não informada',
+    r.status==='pago'?'Pago':'Pendente',r.charge&&byId[r.charge.id]?'Comprovante '+byId[r.charge.id]:'Sem anexo'];
    cols.forEach(function(col,j){
     if(j<=1)drawWrapped(page,values[j],normal,8.1,x+5,y-12,col.width-11,pal.ink,2,10);
     else if(j===3||j===4){
      var val=fit(values[j],normal,8,col.width-10);
      text(val,x+col.width-5-normal.widthOfTextAtSize(val,8),y-18,8,normal,pal.ink)
-    }else text(values[j],x+5,y-18,8,j===5?bold:normal,j===5?(r.status==='pago'?pal.green:pal.red):pal.ink,col.width-10);
+    }else{
+     var size=j===5?7.2:8;
+     text(values[j],x+5,y-18,size,j===6?bold:normal,j===6?(r.status==='pago'?pal.green:pal.red):pal.ink,col.width-10)
+    }
     x+=col.width
    });
    y-=rowsize
@@ -189,14 +195,16 @@ async function exportReport(k,rows,progress){
   y-=22
  }
  section('Aluguéis pagos',paid);section('Aluguéis pendentes',pending);
- ensure(75);text('Índice de comprovantes',margin,y,13,bold,pal.navy);y-=20;
+ ensure(75);text('Índice de comprovantes vinculados',margin,y,13,bold,pal.navy);y-=20;
  if(!entries.length){text('Nenhum comprovante anexado nesta competência.',margin,y-6,9,normal,pal.muted);y-=24}
  entries.forEach(function(entry){
   ensure(24);
-  var r=entry.row,str='Anexo '+entry.number+'  |  '+(r.tenant&&r.tenant.nome||'Inquilino')+'  |  '+(r.property&&r.property.nome||'Imóvel');
-  text(str,margin,y-5,9,normal,pal.ink,w-2*margin);
+  var r=entry.row,raw='Comprovante '+entry.number+'  |  '+(r.tenant&&r.tenant.nome||'Inquilino')+'  |  '+(r.property&&r.property.nome||'Imóvel')
+   +'  |  '+currency(r.paid)+'  |  '+(r.charge.data_pagamento?dateBR(r.charge.data_pagamento):'data não informada');
+  text(raw,margin,y-5,9,normal,pal.ink,w-2*margin);
   y-=18
  });
+ ensure(35);text('Pagamentos sem comprovante são identificados como \'Sem anexo\'. Datas não informadas não são presumidas.',margin,y-8,8,normal,pal.muted,w-2*margin);
  mainPages.forEach(function(p,i){p.drawText('Matos - Gestao de Alugueis  •  '+k+'  •  Relatorio '+(i+1)+'/'+mainPages.length,
   {x:margin,y:23,size:8,font:normal,color:pal.muted})});
  for(var i=0;i<entries.length;i++){
@@ -207,18 +215,18 @@ async function exportReport(k,rows,progress){
   try{
    if(file.type==='application/pdf'){
     var cover=doc.addPage([595.28,841.89]);
-    basicHeader(cover,'ANEXO '+entry.number+' | COMPROVANTE','Documento em PDF: páginas originais a seguir',normal,bold,pal);
+    basicHeader(cover,'COMPROVANTE '+entry.number,'Anexo documental · competência '+k,normal,bold,pal);
     cover.drawText('Inquilino: '+fit(r.tenant&&r.tenant.nome||'—',normal,11,495),{x:45,y:717,size:11,font:normal,color:pal.ink});
     cover.drawText('Imóvel: '+fit(r.property&&r.property.nome||'—',normal,11,495),{x:45,y:681,size:11,font:normal,color:pal.ink});
     cover.drawText('Competência: '+k+'  |  Pago: '+currency(r.paid)+'  |  Data: '+dateBR(charge.data_pagamento),{x:45,y:645,size:10,font:normal,color:pal.ink});
     drawWrapped(cover,'Arquivo: '+(charge.comprovante_nome||'comprovante.pdf'),normal,10,45,607,505,pal.ink,3,13);
-    cover.drawText('O documento original está incorporado nas próximas páginas.',{x:45,y:540,size:10,font:normal,color:pal.muted});
+    cover.drawText('O comprovante original está incorporado integralmente nas páginas seguintes.',{x:45,y:540,size:10,font:normal,color:pal.muted});
     var original=await lib.PDFDocument.load(file.bytes),idx=original.getPageIndices();
     if(!idx.length)throw new Error('O PDF não contém páginas.');
     var copied=await doc.copyPages(original,idx);copied.forEach(function(p){doc.addPage(p)})
    }else{
     var jpg=await jpegForImage(file.bytes,file.type),im=await doc.embedJpg(jpg),imgPage=doc.addPage([595.28,841.89]);
-    basicHeader(imgPage,'ANEXO '+entry.number+' | COMPROVANTE','Imagem original convertida para impressão em PDF',normal,bold,pal);
+    basicHeader(imgPage,'COMPROVANTE '+entry.number,'Documento digital · competência '+k,normal,bold,pal);
     imgPage.drawText('Inquilino: '+fit(r.tenant&&r.tenant.nome||'—',normal,10,510),{x:38,y:738,size:10,font:normal,color:pal.ink});
     imgPage.drawText('Imóvel: '+fit(r.property&&r.property.nome||'—',normal,10,510),{x:38,y:716,size:10,font:normal,color:pal.ink});
     imgPage.drawText('Competência: '+k+' | Recebido: '+currency(r.paid)+' | Data: '+dateBR(charge.data_pagamento),{x:38,y:694,size:9,font:normal,color:pal.ink});

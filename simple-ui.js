@@ -2,11 +2,13 @@
 'use strict';
 
 // Define os menus visíveis para cada perfil de usuário.
-var adminMain=['Dashboard','Cadastros','Contratos','Pagamentos','IPTU','Chamados','Relatórios','Acessos','Configurações'];
+// Mesma navegação operacional para administrador e proprietário de consulta geral.
+// A diferença é a permissão: somente o administrador recebe ações de escrita.
+var consultaMenus=['Dashboard','Cadastros','Inquilinos','Contratos','Pagamentos','IPTU','Chamados','Financeiro','Repasses','Gastos','Documentos','Vistorias','Relatórios'];
+var adminMain=consultaMenus.concat(['Acessos','Configurações']);
 var ownerMain=['Dashboard','Pagamentos','IPTU','Chamados','Relatórios'];
 var tenantMain=['Dashboard','Pagamentos','IPTU','Chamados'];
 adminMenus=adminMain; ownerMenus=ownerMain; tenantMenus=tenantMain;
-consultaMenus=['Dashboard','Cadastros','Inquilinos','Contratos','Pagamentos','IPTU','Chamados','Financeiro','Repasses','Gastos','Documentos','Vistorias','Relatórios'];
 // Liga cada tela simplificada à tabela correspondente no banco.
 tables.Pagamentos='cobrancas'; tables.Chamados='manutencoes'; tables.Cadastros='imoveis';
 // Funções auxiliares para competência mensal, vencimentos e contratos ativos.
@@ -57,18 +59,18 @@ function groupedPaymentRows(rows,actions){
  }).join('')
 }
 function paymentRows(rows,actions){
- return rows.map(function(r){return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+(r.charge&&r.charge.comprovante_path?' <button class="pay-clip" data-proof="'+esc(r.charge.comprovante_path)+'" title="Ver comprovante" aria-label="Ver comprovante">📎</button>':'')+'</td><td>'+st(r.status)+'</td>'+(actions?'<td><button class="row-primary" data-pay="'+r.contract.id+'">'+(r.status==='pago'?'Editar':'Informar pagamento')+'</button></td>':'')+'</tr>'}).join('')
+ return rows.map(function(r){return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+(r.charge&&r.charge.comprovante_path?' <button type="button" class="pay-clip" data-proof-id="'+esc(r.charge.id)+'" title="Visualizar comprovante" aria-label="Visualizar comprovante de '+esc(r.tenant&&r.tenant.nome||'pagamento')+'">Ver comprovante</button>':'')+'</td><td>'+st(r.status)+'</td>'+(actions?'<td><button class="row-primary" data-pay="'+r.contract.id+'">'+(r.status==='pago'?'Editar':'Informar pagamento')+'</button></td>':'')+'</tr>'}).join('')
 }
 // Exibe os aluguéis previstos, pagos e pendentes do mês selecionado.
 async function paymentsPage(){
  var k=window._simpleMonth||isoMonth(),rows=await ledgerData(k);window._simpleMonth=k;
  var manual=currentRole==='admin'?'<button id="quickPayment" class="btn primary">⚡ Pagamento rápido</button><button id="manualPayment" class="btn secondary">+ Adicionar pagamento</button>':'';
- E('content').innerHTML='<div class="simple-toolbar"><div><h2>Pagamentos</h2><p>Informe somente o que foi recebido. O restante é considerado pendente automaticamente.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">'+monthPicker('paymentMonth',k)+manual+'</div></div>'+summaryCards(rows)+'<div class="panel simple-panel"><div class="panel-title"><h3>Aluguéis da competência</h3><span class="muted">'+rows.length+' imóveis</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th>'+(currentRole==='admin'?'<th>Ação</th>':'')+'</tr></thead><tbody>'+(groupedPaymentRows(rows,currentRole==='admin')||'<tr><td colspan="7" class="empty">Nenhum contrato vinculado a esta competência. Use <b>Adicionar pagamento</b> para registrar manualmente.</td></tr>')+'</tbody></table></div></div>';
+ E('content').innerHTML='<div class="simple-toolbar"><div><h2>Pagamentos</h2><p>Consulte recebimentos e comprovantes por competência. Apenas o administrador pode registrar pagamentos.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap">'+monthPicker('paymentMonth',k)+manual+'</div></div>'+summaryCards(rows)+'<div class="panel simple-panel"><div class="panel-title"><h3>Aluguéis da competência</h3><span class="muted">'+rows.length+' imóveis</span></div><div class="tablewrap"><table class="table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th>'+(currentRole==='admin'?'<th>Ação</th>':'')+'</tr></thead><tbody>'+(groupedPaymentRows(rows,currentRole==='admin')||'<tr><td colspan="7" class="empty">Nenhum contrato vinculado a esta competência. Use <b>Adicionar pagamento</b> para registrar manualmente.</td></tr>')+'</tbody></table></div></div>';
  E('paymentMonth').onchange=function(){window._simpleMonth=this.value;paymentsPage()};
  if(E('quickPayment'))E('quickPayment').onclick=function(){openQuickPayment(k)};
  if(E('manualPayment'))E('manualPayment').onclick=function(){openManualPayment(k)};
  Array.prototype.forEach.call(document.querySelectorAll('[data-pay]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.contract.id===b.dataset.pay});openPayment(r,k)}})
- Array.prototype.forEach.call(document.querySelectorAll('[data-proof]'),function(b){b.onclick=function(){openProof(b.dataset.proof)}})
+ Array.prototype.forEach.call(document.querySelectorAll('[data-proof-id]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.charge&&x.charge.id===b.dataset.proofId});if(r)openProof(r)}})
 }
 async function openQuickPayment(k){
  if(currentRole!=='admin')return;
@@ -136,7 +138,66 @@ async function savePaymentWithProof(obj,old,file){
   throw error
  }
 }
-async function openProof(path){if(!path)return;var w=window.open('','_blank');try{var d=await request('/storage/v1/object/sign/comprovantes/'+path.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:authHeaders(session.access_token),body:JSON.stringify({expiresIn:300})});var u=d&&(d.signedURL||d.signedUrl);if(!u)throw new Error('Não foi possível abrir o comprovante.');u=u.indexOf('http')===0?u:SUPA_URL+'/storage/v1'+u;if(w)w.location=u;else window.location=u}catch(e){if(w)w.close();alert(e.message)}}
+// Comprovantes privados: pré-visualização no próprio Matos, aberta pelo lançamento
+// selecionado. O arquivo jamais é transformado em URL pública permanente.
+async function openProof(row){
+ var charge=row&&row.charge, path=charge&&charge.comprovante_path;
+ if(!path)return;
+ var old=E('matosProofModal');if(old)old.remove();
+ var overlay=document.createElement('div');
+ overlay.className='modalbg proof-overlay';overlay.id='matosProofModal';
+ overlay.innerHTML='<section class="proof-dialog" role="dialog" aria-modal="true" aria-labelledby="proofTitle">'
+  +'<div class="proof-dialog-head"><div><span class="proof-eyebrow">Matos · Gestão de Aluguéis</span><h2 id="proofTitle">Comprovante de pagamento</h2></div><button type="button" id="proofClose" class="proof-close" aria-label="Fechar visualização">×</button></div>'
+  +'<div class="proof-info"><div><small>INQUILINO</small><strong id="proofTenant"></strong></div><div><small>IMÓVEL</small><strong id="proofProperty"></strong></div><div><small>VALOR RECEBIDO</small><strong id="proofAmount"></strong></div><div><small>DATA DO PAGAMENTO</small><strong id="proofDate"></strong></div></div>'
+  +'<div class="proof-file-info"><span class="proof-file-badge" id="proofType">ARQUIVO</span><span id="proofFileName"></span></div>'
+  +'<div id="proofViewer" class="proof-viewer"><div class="proof-loading">Carregando comprovante privado...</div></div>'
+  +'<div id="proofMessage" class="proof-message" role="status" aria-live="polite"></div>'
+  +'<footer class="proof-dialog-actions"><a id="proofOpenTab" class="btn secondary" target="_blank" rel="noopener noreferrer" hidden>Abrir em nova aba</a><button type="button" id="proofDownload" class="btn primary" disabled>Baixar comprovante</button><button type="button" id="proofDone" class="btn secondary">Fechar</button></footer></section>';
+ document.body.appendChild(overlay);
+ function inside(id){return overlay.querySelector('#'+id)}
+ function close(){document.removeEventListener('keydown',handleKey);overlay.remove()}
+ function handleKey(e){if(e.key==='Escape')close()}
+ document.addEventListener('keydown',handleKey);
+ overlay.addEventListener('click',function(e){if(e.target===overlay)close()});
+ inside('proofClose').onclick=close;inside('proofDone').onclick=close;
+ inside('proofTenant').textContent=row.tenant&&row.tenant.nome||'Não informado';
+ inside('proofProperty').textContent=row.property&&row.property.nome||'Não informado';
+ inside('proofAmount').textContent=money(row.paid);
+ inside('proofDate').textContent=charge.data_pagamento?dateBR(charge.data_pagamento):'Não informada no cadastro';
+ var ext=String(charge.comprovante_nome||path).split('.').pop().toLowerCase();
+ var mime=String(charge.comprovante_tipo||'').toLowerCase(),isPdf=mime==='application/pdf'||(mime.indexOf('image/')!==0&&ext==='pdf');
+ inside('proofType').textContent=isPdf?'PDF':'IMAGEM';
+ inside('proofFileName').textContent=charge.comprovante_nome||'Arquivo anexado ao pagamento';
+ try{
+  var res=await request('/storage/v1/object/sign/comprovantes/'+path.split('/').map(encodeURIComponent).join('/'),{method:'POST',headers:authHeaders(session.access_token),body:JSON.stringify({expiresIn:300})});
+  var raw=res&&(res.signedURL||res.signedUrl);if(!raw)throw new Error('Não foi possível autorizar a visualização do arquivo.');
+  var signed=raw.indexOf('http')===0?raw:SUPA_URL+'/storage/v1'+(raw.charAt(0)==='/'?raw:'/'+raw);var address=new URL(signed);if(address.origin!==new URL(SUPA_URL).origin)throw new Error('Endereço de comprovante inválido.');
+  if(!overlay.isConnected)return;
+  var viewer=inside('proofViewer');viewer.replaceChildren();
+  var node=document.createElement(isPdf?'iframe':'img');
+  node.src=address.href;
+  if(isPdf){node.title='Pré-visualização do comprovante em PDF';node.setAttribute('referrerpolicy','no-referrer')}
+  else{node.alt='Comprovante de '+(row.tenant&&row.tenant.nome||'pagamento');node.referrerPolicy='no-referrer'}
+  viewer.appendChild(node);
+  var link=inside('proofOpenTab');link.href=address.href;link.hidden=false;
+  inside('proofMessage').textContent='Arquivo privado vinculado a este pagamento. O link de visualização expira em 5 minutos.';
+  var down=inside('proofDownload');down.disabled=false;
+  down.onclick=async function(){
+   down.disabled=true;inside('proofMessage').textContent='Preparando arquivo para download...';
+   try{
+    var downloadUrl=SUPA_URL+'/storage/v1/object/authenticated/comprovantes/'+path.split('/').map(encodeURIComponent).join('/');
+    var response=await fetch(downloadUrl,{headers:{apikey:KEY,Authorization:'Bearer '+session.access_token}});
+    if(!response.ok)throw new Error('Não foi possível acessar o arquivo (HTTP '+response.status+').');
+    var blob=await response.blob(),url=URL.createObjectURL(blob),a=document.createElement('a');
+    var safeName=String(charge.comprovante_nome||('comprovante.'+(isPdf?'pdf':'jpg'))).replace(/[\\/\x00-\x1f]/g,'_').slice(0,160);
+    a.href=url;a.download=safeName||'comprovante.pdf';a.hidden=true;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url)},60000);
+    inside('proofMessage').textContent='Arquivo enviado para download.';
+   }catch(err){inside('proofMessage').textContent='Falha no download: '+err.message}
+   finally{if(overlay.isConnected)down.disabled=false}
+  }
+ }catch(err){if(overlay.isConnected){inside('proofViewer').innerHTML='<div class="proof-loading">Não foi possível exibir este comprovante.</div>';inside('proofMessage').textContent=err.message}}
+}
 window.MatosPayment={methods:PAY_METHODS,proofProblem:proofProblem,proofPath:proofPath};
 // Calcula quantos dias faltam até uma data, usado nos avisos de contrato.
 function daysUntil(v){if(!v)return 99999;var t=new Date(String(v).slice(0,10)+'T12:00:00'),n=new Date();n.setHours(12,0,0,0);return Math.ceil((t-n)/86400000)}
@@ -245,10 +306,14 @@ async function callsPage(){
  Array.prototype.forEach.call(document.querySelectorAll('[data-call]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.id===b.dataset.call});openForm('Manutenção',r)}})
 }
 // Gera a visão mensal de pagos e pendentes, pronta para impressão/PDF.
+// O mesmo relatório é usado pelo administrador e pelo proprietário de consulta geral.
+// Não inventar datas de pagamento: histórico antigo pode ter data não informada.
 function reportPaymentRows(list,proofNumbers){
  return list.map(function(r){
   var charge=r.charge||{},code=charge.id&&proofNumbers[charge.id];
-  return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+'</td><td>'+st(r.status)+'</td><td>'+(code?'<button type="button" class="report-proof-open" data-proof="'+esc(charge.comprovante_path)+'" title="Abrir comprovante">Anexo '+esc(code)+'</button>':'<span class="muted">Não anexado</span>')+'</td></tr>'
+  var proof=code?'<button type="button" class="report-proof-open" data-proof-id="'+esc(charge.id)+'" aria-label="Visualizar comprovante '+esc(code)+' de '+esc(r.tenant&&r.tenant.nome||'pagamento')+'"><span class="proof-number">Nº '+esc(code)+'</span><span>Visualizar</span></button>':'<span class="report-no-proof">Sem anexo</span>';
+  var date=charge.data_pagamento?dateBR(charge.data_pagamento):'<span class="muted">Não informada</span>';
+  return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+'</td><td>'+date+'</td><td>'+st(r.status)+'</td><td>'+proof+'</td></tr>'
  }).join('')
 }
 async function simpleReports(){
@@ -257,22 +322,33 @@ async function simpleReports(){
  var files=rows.filter(function(r){return r.charge&&r.charge.id&&r.charge.comprovante_path}),numbers={};
  files.forEach(function(r,i){numbers[r.charge.id]=String(i+1).padStart(2,'0')});
  function sec(title,list,kind){
-  return '<div class="panel simple-panel report-section"><div class="panel-title"><h3>'+title+'</h3><span class="badge '+(kind==='ok'?'green':'red')+'">'+list.length+'</span></div><div class="tablewrap"><table class="table report-table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Situação</th><th>Comprovante</th></tr></thead><tbody>'+(reportPaymentRows(list,numbers)||'<tr><td colspan="7" class="empty">Nenhum registro.</td></tr>')+'</tbody></table></div></div>'
+  return '<section class="panel simple-panel report-section"><div class="panel-title"><div><h3>'+title+'</h3><p class="muted">Competência '+esc(k)+' · '+list.length+' registros</p></div><span class="badge '+(kind==='ok'?'green':'red')+'">'+list.length+'</span></div><div class="tablewrap"><table class="table report-table"><thead><tr><th>Inquilino</th><th>Imóvel</th><th>Vencimento</th><th>Previsto</th><th>Recebido</th><th>Pago em</th><th>Situação</th><th>Comprovante</th></tr></thead><tbody>'+(reportPaymentRows(list,numbers)||'<tr><td colspan="8" class="empty">Nenhum registro nesta situação.</td></tr>')+'</tbody></table></div></section>'
  }
- E('content').innerHTML='<div id="printArea"><div class="simple-toolbar"><div><h2>Relatório mensal</h2><p>Competência '+esc(k)+' · pagamentos e comprovantes vinculados.</p></div><div class="report-actions"><div class="report-export-controls">'+monthPicker('simpleReportMonth',k)+'<button id="simplePrint" class="btn primary" type="button">Baixar PDF completo com anexos</button><button id="simplePrintTable" class="btn secondary" type="button">Imprimir somente tabela</button></div></div></div>'+summaryCards(rows)+'<div class="report-proof-legend">Comprovantes anexados: <b>'+files.length+'</b>. O PDF completo incorpora fotos e todas as páginas dos comprovantes em PDF, vinculados ao pagamento correspondente.</div><div id="reportExportStatus" class="report-export-status" role="status" aria-live="polite"></div>'+sec('Pagos',paid,'ok')+sec('Pendentes',pending,'bad')+'</div>';
+ var gallery=files.length?'<section class="panel simple-panel proof-gallery-section"><div class="panel-title"><div><h3>Comprovantes do mês</h3><p class="muted">Cada arquivo está vinculado a um pagamento. Clique para pré-visualizar ou baixar.</p></div><span class="badge green">'+files.length+' anexos</span></div><div class="proof-gallery">'+files.map(function(r){
+  var id=r.charge.id,n=numbers[id],kind=String(r.charge.comprovante_tipo||'').indexOf('pdf')>=0?'PDF':'Imagem';
+  return '<article class="proof-gallery-card"><div class="proof-gallery-icon" aria-hidden="true">'+(kind==='PDF'?'PDF':'IMG')+'</div><div class="proof-gallery-content"><span>Comprovante '+esc(n)+' · '+kind+'</span><b>'+esc(r.tenant&&r.tenant.nome||'Inquilino não informado')+'</b><small>'+esc(r.property&&r.property.nome||'Imóvel não informado')+' · '+money(r.paid)+'</small><small>Pagamento: '+(r.charge.data_pagamento?dateBR(r.charge.data_pagamento):'data não informada')+'</small></div><button type="button" class="btn secondary proof-gallery-action" data-proof-id="'+esc(id)+'">Visualizar</button></article>'
+ }).join('')+'</div></section>':'<div class="report-no-files" role="note">Nenhum comprovante foi anexado aos pagamentos desta competência.</div>';
+ E('content').innerHTML='<div id="printArea" class="matos-monthly-report"><div class="simple-toolbar report-topbar"><div><h2>Relatório mensal</h2><p>Referência '+esc(k)+' · demonstrativo de aluguéis e comprovantes.</p></div><div class="report-actions"><div class="report-export-controls"><label class="report-month-label">Competência'+monthPicker('simpleReportMonth',k)+'</label><button id="simplePrint" class="btn primary" type="button">Baixar PDF completo com anexos</button><button id="simplePrintTable" class="btn secondary" type="button">Imprimir somente tabela</button></div></div></div>'
+  +summaryCards(rows)
+  +'<div class="report-proof-summary"><div><strong>'+files.length+' comprovante'+(files.length===1?'':'s')+' anexado'+(files.length===1?'':'s')+'</strong><span>Arquivos protegidos; o PDF completo inclui seus anexos após o demonstrativo.</span></div><div><strong>'+paid.length+' pago'+(paid.length===1?'':'s')+' · '+pending.length+' pendente'+(pending.length===1?'':'s')+'</strong><span>Datas não cadastradas aparecem como “Não informada”.</span></div></div>'
+  +'<div id="reportExportStatus" class="report-export-status" role="status" aria-live="polite"></div>'
+  +sec('Pagamentos recebidos',paid,'ok')+sec('Pagamentos pendentes',pending,'bad')+gallery
+  +'<p class="report-footnote">Observação: dados financeiros são apresentados conforme os lançamentos da competência selecionada. A ausência de data de pagamento não significa ausência de quitação.</p></div>';
  E('simpleReportMonth').onchange=function(){window._simpleReportMonth=this.value;simpleReports()};
  E('simplePrintTable').onclick=function(){window.print()};
  E('simplePrint').onclick=async function(){
   var btn=this,msg=E('reportExportStatus');btn.disabled=true;
   try{
    if(!window.MatosMonthlyReport||!window.MatosMonthlyReport.export)throw new Error('O módulo de relatório não foi carregado. Atualize a página.');
-   msg.textContent='Montando o PDF mensal...';
-   await window.MatosMonthlyReport.export(k,rows,function(at,total){msg.textContent='Incorporando comprovante '+at+' de '+total+'...'});
-   msg.textContent='PDF completo gerado para download.';
+   msg.textContent='Preparando relatório PDF e comprovantes...';
+   await window.MatosMonthlyReport.export(k,rows,function(at,total){msg.textContent='Incorporando comprovante '+at+' de '+total+' ao PDF...'});
+   msg.textContent='Relatório PDF completo gerado com sucesso.';
   }catch(e){msg.textContent='Não foi possível gerar o relatório completo: '+e.message}
   finally{btn.disabled=false}
  };
- Array.prototype.forEach.call(document.querySelectorAll('.report-proof-open'),function(b){b.onclick=function(){openProof(b.dataset.proof)}})
+ Array.prototype.forEach.call(E('content').querySelectorAll('[data-proof-id]'),function(b){
+  b.onclick=function(){var r=rows.find(function(x){return x.charge&&x.charge.id===b.dataset.proofId});if(r)openProof(r)}
+ })
 }
 
 // Centraliza cadastros técnicos e configurações administrativas.
