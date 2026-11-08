@@ -165,7 +165,7 @@ async function openProof(row){
  inside('proofAmount').textContent=money(row.paid);
  inside('proofDate').textContent=charge.data_pagamento?dateBR(charge.data_pagamento):'Não informada no cadastro';
  var ext=String(charge.comprovante_nome||path).split('.').pop().toLowerCase();
- var mime=String(charge.comprovante_tipo||'').toLowerCase(),isPdf=mime.indexOf('pdf')>=0||ext==='pdf';
+ var mime=String(charge.comprovante_tipo||'').toLowerCase(),isPdf=mime==='application/pdf'||(mime.indexOf('image/')!==0&&ext==='pdf');
  inside('proofType').textContent=isPdf?'PDF':'IMAGEM';
  inside('proofFileName').textContent=charge.comprovante_nome||'Arquivo anexado ao pagamento';
  try{
