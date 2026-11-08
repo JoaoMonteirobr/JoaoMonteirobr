@@ -126,7 +126,7 @@ describe('Configurações: cinco cadastros funcionais', () => {
     const html = read('index.html');
     expect(enhancements).toContain("if(obj.taxa_administracao==null)obj.taxa_administracao=10");
     expect(enhancements).toContain("if(obj.aluguel_base==null)obj.aluguel_base=0");
-    expect(enhancements).toContain("if(!obj.status)obj.status='ativo'");
+    expect(enhancements).toContain("if(p==='Inquilinos'&&!obj.status)obj.status='ativo'");
     expect(enhancements).toContain("if(!obj.status)obj.status=obj.data_inicio>");
     expect(enhancements).toContain('if(current&&vals.indexOf(current)<0)vals.push(current)');
     expect(app2).toContain("'Imóveis':'imóvel'");
