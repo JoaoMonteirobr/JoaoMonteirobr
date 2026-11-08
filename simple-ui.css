@@ -31,3 +31,31 @@
 .pay-proof-btns{display:flex;gap:8px;flex-wrap:wrap}.pay-proof-btns .btn{cursor:pointer}
 .pay-proof-name{display:block;margin-top:6px;color:var(--muted)}.pay-proof-err{color:#b4232c;font-weight:600}
 @media(max-width:760px){.pay-proof-btns .btn{flex:1;min-height:46px;justify-content:center}}
+
+/* Comprovantes: opções de arquivo e visualização de anexos no relatório mensal. */
+.pay-proof-select{width:100%;max-width:100%;padding:11px;min-height:43px}
+.pay-proof-select::file-selector-button{background:#eff6fc;color:#184d78;font-weight:700;border:1px solid #ccdfea;border-radius:7px;padding:8px 11px;margin-right:10px;cursor:pointer}
+.report-export-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.report-export-controls .month-input{min-width:146px}
+.report-proof-legend{font-size:12px;color:#36526b;background:#f2f7fc;border:1px solid #d8e7f4;border-radius:10px;padding:12px 14px;margin:8px 0 14px;line-height:1.5}
+.report-export-status{color:#34516c;font-size:12px;margin:0 0 12px}
+.report-export-status:empty{display:none}
+.report-proof-open{border:1px solid #c2d8ec;border-radius:7px;color:#164b76;background:#f4f8fc;font:inherit;font-weight:700;white-space:nowrap;padding:6px 8px;cursor:pointer}
+.report-proof-open:hover{background:#e5f1fc}
+.report-table{min-width:740px}
+.report-table th:last-child,.report-table td:last-child{white-space:nowrap}
+@media(max-width:760px){
+ .report-export-controls{align-items:stretch;flex-direction:column;width:100%}
+ .report-export-controls .month-input,.report-export-controls .btn{width:100%;min-width:0}
+ .report-proof-legend{font-size:12px}
+}
+@media print{
+ @page{size:A4 landscape;margin:12mm}
+ .report-export-controls,.report-export-status,.report-proof-legend{display:none!important}
+ .report-section{break-inside:auto!important;page-break-inside:auto!important}
+ .report-table{min-width:0!important;width:100%!important;font-size:8.2pt}
+ .report-table th,.report-table td{padding:5px 6px;white-space:normal!important;overflow-wrap:anywhere}
+ .report-table thead{display:table-header-group}
+ .report-table tr{break-inside:avoid;page-break-inside:avoid}
+ .report-proof-open{border:0;background:none;padding:0;color:#111;pointer-events:none}
+}
