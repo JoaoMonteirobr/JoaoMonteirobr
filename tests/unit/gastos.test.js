@@ -107,7 +107,7 @@ describe('aba Gastos', () => {
 
   it('é carregado depois da tela simplificada', () => {
     const index = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
-    expect(index).toContain('/gastos.js?v=1');
+    expect(index).toContain('/gastos.js?v=2');
     expect(index).toContain('/gastos.css?v=1');
     expect(index.indexOf('/gastos.js')).toBeGreaterThan(index.indexOf('/simple-ui.js'));
   });
