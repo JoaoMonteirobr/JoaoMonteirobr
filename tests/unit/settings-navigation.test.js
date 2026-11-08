@@ -19,6 +19,7 @@ function sandbox(role = 'admin') {
     adminMenus: [],
     ownerMenus: [],
     tenantMenus: [],
+    consultaMenus: [],
     navIcon: () => '•',
     E: (id) => dom.window.document.getElementById(id),
     esc: (value) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;'),
@@ -36,7 +37,11 @@ function sandbox(role = 'admin') {
       ctx.E('content').innerHTML = '<div class="panel"><button id="acc_save" type="button">Criar acesso</button></div>';
       ctx.E('acc_save').onclick = () => { counts.accessSave++; };
     },
-    load: async () => {},
+    load: async () => {
+      if (ctx.currentRole !== 'admin' && ctx.page === 'Configurações') {
+        ctx.E('content').textContent = 'Configurações disponíveis somente para administradores.';
+      }
+    },
     shell: () => {
       counts.shell++;
       return ctx.load();
