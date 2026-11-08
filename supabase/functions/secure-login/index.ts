@@ -25,6 +25,13 @@ function deviceLabel(uaRaw: string | null) {
   return browser ? `${device} · ${browser}` : device;
 }
 
+
+function normalizeBrazilPhone(value: string): string | null {
+  const raw = String(value || '').replace(/\D/g, '');
+  const digits = raw.length === 13 && raw.startsWith('55') ? raw.slice(2) : raw;
+  return /^[1-9][0-9]9[0-9]{8}$/.test(digits) ? digits : null;
+}
+
 async function sha256(value: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -80,16 +87,22 @@ Deno.serve(async (req: Request) => {
     const code = error instanceof Error ? error.message : 'invalid_request';
     return json(req, { error: code }, code === 'request_too_large' ? 413 : 400);
   }
-  const email = String(body.email || '')
+  const identifier = String(body.login || body.email || '')
     .trim()
     .toLowerCase();
   const password = String(body.password || '');
-  if (!email || !password) return json(req, { error: 'Informe e-mail e senha.' }, 400);
+  if (!identifier || !password) return json(req, { error: 'Informe telefone ou e-mail e senha.' }, 400);
+  const phone = identifier.includes('@') ? null : normalizeBrazilPhone(identifier);
+  if (!identifier.includes('@') && !phone) {
+    return json(req, { error: 'Informe um celular com DDD ou um e-mail válido.' }, 400);
+  }
+  const accountKey = phone ? 'telefone:' + phone : identifier;
+  const auditIdentity = phone ? 'tel:' + phone.slice(0, 2) + '*****' + phone.slice(-4) : identifier;
 
   const forwarded = req.headers.get('x-forwarded-for') || '';
   const ip = forwarded.split(',')[0].trim() || req.headers.get('cf-connecting-ip') || 'unknown';
   const userAgent = req.headers.get('user-agent');
-  const accountIpKey = `account_ip:${await sha256(`${email}|${ip}`)}`;
+  const accountIpKey = `account_ip:${await sha256(`${accountKey}|${ip}`)}`;
   const ipKey = `ip:${await sha256(ip)}`;
 
   const db = createClient(url, serviceRole, {
@@ -121,7 +134,26 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  const authResult = await authClient.auth.signInWithPassword({ email, password });
+  // Não revela e-mail interno, não depende de SMS/WhatsApp e mantém o lockout por telefone e IP.
+  // A consulta é feita no servidor, nunca expondo identidade interna ao cliente anônimo.
+  let resolvedEmail = identifier;
+  let phoneOwnerId: string | null = null;
+  if (phone) {
+    const ownerProfile = await db.from('perfis').select('user_id').eq('role', 'proprietario_consulta')
+      .eq('telefone_login', phone).maybeSingle();
+    if (ownerProfile.error) return json(req, { error: 'login_security_unavailable' }, 503);
+    phoneOwnerId = ownerProfile.data?.user_id || null;
+    if (phoneOwnerId) {
+      const authUser = await db.auth.admin.getUserById(phoneOwnerId);
+      resolvedEmail = authUser.data?.user?.email || 'acesso-indisponivel@matos.invalid';
+    } else {
+      resolvedEmail = 'acesso-nao-encontrado@matos.invalid';
+    }
+  }
+  const authResult = await authClient.auth.signInWithPassword({ email: resolvedEmail, password });
+  if (phone && authResult.data?.user?.id !== phoneOwnerId && !authResult.error) {
+    return json(req, { error: 'Credenciais inválidas.' }, 401);
+  }
   if (authResult.error || !authResult.data.session || !authResult.data.user) {
     try {
       const [accountState, ipState] = await Promise.all([
@@ -130,7 +162,7 @@ Deno.serve(async (req: Request) => {
       ]);
       await db.from('login_auditoria').insert({
         user_id: null,
-        email,
+        email: auditIdentity,
         sucesso: false,
         ip: ip === 'unknown' ? null : ip,
         user_agent: userAgent,
@@ -141,7 +173,7 @@ Deno.serve(async (req: Request) => {
         {
           error: blocked
             ? 'Limite de tentativas excedido. Tente novamente mais tarde.'
-            : 'E-mail ou senha inválidos.',
+            : 'Telefone/e-mail ou senha inválidos.',
           locked: blocked,
           locked_until: accountState.blockedUntil || ipState.blockedUntil,
         },
@@ -155,7 +187,7 @@ Deno.serve(async (req: Request) => {
   await db.from('login_tentativas').delete().eq('chave', accountIpKey);
   await db.from('login_auditoria').insert({
     user_id: authResult.data.user.id,
-    email,
+    email: auditIdentity,
     sucesso: true,
     ip: ip === 'unknown' ? null : ip,
     user_agent: userAgent,
