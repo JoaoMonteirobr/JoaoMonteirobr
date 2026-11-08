@@ -92,3 +92,81 @@
  .settings-card{min-height:95px}
 }
 @media print{.settings-subnav,.settings-hint{display:none!important}}
+
+/* Matos: relatórios claros, galeria de comprovantes e pré-visualização privada. */
+.matos-monthly-report{min-width:0}
+.report-topbar{align-items:center;gap:18px}
+.report-month-label{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:700;color:#58718b}
+.report-month-label .month-input{min-height:43px;max-width:195px}
+.report-proof-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+.report-proof-summary>div{display:flex;flex-direction:column;gap:5px;padding:13px 16px;background:#f6f9fd;border:1px solid #dce7f4;border-radius:12px;line-height:1.4}
+.report-proof-summary strong{color:#173f6d;font-size:14px}
+.report-proof-summary span{color:#5f738d;font-size:12px}
+.report-table{min-width:1080px}
+.report-table th{font-size:10px;white-space:nowrap}
+.report-table td{font-size:12px;vertical-align:middle;line-height:1.5}
+.report-table td:nth-child(4),.report-table td:nth-child(5){white-space:nowrap;font-variant-numeric:tabular-nums}
+.report-proof-open{display:inline-flex;align-items:center;gap:7px;min-height:34px;padding:6px 10px;border-radius:8px;background:#eef6ff;color:#134c7e;border:1px solid #c8dcf0;font-size:12px;font-weight:700;cursor:pointer}
+.report-proof-open:hover,.report-proof-open:focus-visible{background:#ddecfb;border-color:#79b0e6}
+.proof-number{display:inline-flex;align-items:center;justify-content:center;min-width:35px;padding:3px 6px;border-radius:5px;background:#fff;border:1px solid #dce7f4;font-size:11px}
+.report-no-proof{font-size:11px;color:#77899d}
+.proof-gallery-section{margin-top:15px}
+.proof-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:10px;margin-top:8px}
+.proof-gallery-card{border:1px solid #dce7f1;border-radius:12px;background:#fbfdff;padding:12px;display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.proof-gallery-icon{width:43px;height:43px;flex-shrink:0;display:grid;place-items:center;border-radius:9px;background:#e9f2fc;color:#175386;font-size:11px;font-weight:900}
+.proof-gallery-content{flex:1;min-width:140px;display:flex;flex-direction:column;gap:3px}
+.proof-gallery-content span{font-size:10px;font-weight:800;color:#48739b;letter-spacing:.02em}
+.proof-gallery-content b{font-size:12px;color:#153454;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.proof-gallery-content small{font-size:11px;color:#677d93;line-height:1.35;overflow-wrap:anywhere}
+.proof-gallery-action{min-height:34px;font-size:11px;padding:6px 12px}
+.report-no-files{padding:18px;margin-top:14px;background:#f8fafc;border:1px dashed #c5d5e6;border-radius:10px;color:#667c93;font-size:12px}
+.report-footnote{font-size:11px;color:#61768b;line-height:1.6;margin:18px 0}
+.pay-clip{min-height:31px;padding:5px 8px;margin-left:6px;border-radius:7px;border:1px solid #c6dcec;background:#eff7fd;color:#18577e;font-weight:700;font-size:11px;white-space:nowrap}
+.pay-clip:hover{background:#dceefa}
+.proof-overlay{z-index:120;overflow-y:auto}
+.proof-dialog{display:flex;flex-direction:column;width:min(860px,100%);max-height:min(94vh,1000px);background:#fff;border-radius:18px;box-shadow:0 28px 85px #001c3459;overflow:hidden}
+.proof-dialog-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:18px 22px;background:#0b3561;color:#fff;border-bottom:3px solid #e3b54a}
+.proof-dialog-head h2{font-size:19px;line-height:1.3;margin:4px 0 0}
+.proof-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#b7d5f2}
+.proof-close{width:36px;height:36px;flex-shrink:0;border-radius:9px;border:1px solid #ffffff40;color:#fff;background:#ffffff1d;font-size:26px;cursor:pointer}
+.proof-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:16px 22px 8px;background:#fafcfe}
+.proof-info>div{min-width:0}
+.proof-info small{display:block;font-size:10px;color:#69839d;font-weight:700;margin-bottom:3px}
+.proof-info strong{display:block;font-size:13px;color:#193f67;overflow-wrap:anywhere}
+.proof-file-info{display:flex;align-items:center;gap:10px;padding:9px 22px 13px;background:#fafcfe;color:#486580;font-size:12px;min-width:0;overflow-wrap:anywhere}
+.proof-file-badge{padding:5px 8px;background:#e8f0fa;border:1px solid #d4e3f0;border-radius:5px;color:#18558a;font-size:10px;font-weight:800}
+.proof-viewer{background:#e9eef5;display:flex;align-items:center;justify-content:center;margin:0 22px;min-height:180px;max-height:48vh;overflow:auto;border:1px solid #d6e1ec;border-radius:10px}
+.proof-viewer img{display:block;max-width:100%;max-height:47vh;width:auto;height:auto;object-fit:contain}
+.proof-viewer iframe{width:100%;height:47vh;border:0;background:#fff}
+.proof-loading{padding:28px 16px;text-align:center;color:#556f88;font-size:13px}
+.proof-message{min-height:24px;padding:9px 22px;font-size:11px;color:#52708f;line-height:1.4}
+.proof-dialog-actions{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:9px;padding:14px 22px 18px;border-top:1px solid #e2ebf4}
+.proof-dialog-actions [hidden]{display:none!important}
+.proof-dialog-actions .btn{min-height:39px}
+@media(max-width:760px){
+ .report-proof-summary{grid-template-columns:1fr}
+ .report-topbar{align-items:stretch}
+ .report-month-label .month-input{max-width:none;width:100%}
+ .proof-overlay{padding:7px;align-items:center}
+ .proof-dialog{max-height:96dvh;border-radius:13px}
+ .proof-dialog-head{padding:12px 14px}
+ .proof-dialog-head h2{font-size:16px}
+ .proof-info{padding:12px 14px 6px;gap:9px}
+ .proof-info strong{font-size:11px}
+ .proof-file-info{padding:8px 14px}
+ .proof-viewer{margin:0 10px;max-height:40vh;min-height:130px}
+ .proof-viewer img{max-height:39vh}
+ .proof-viewer iframe{height:39vh}
+ .proof-message{padding:7px 14px;font-size:11px}
+ .proof-dialog-actions{padding:10px;gap:7px}
+ .proof-dialog-actions .btn{flex:1;min-width:130px}
+ .proof-gallery{grid-template-columns:1fr}
+}
+@media print{
+ .report-topbar .report-actions,.report-export-controls,.report-export-status,.proof-gallery-section,.report-proof-summary,.proof-overlay{display:none!important}
+ .report-table{min-width:0!important;width:100%!important;table-layout:fixed}
+ .report-table th,.report-table td{font-size:8pt!important;padding:5px 4px!important;white-space:normal!important;overflow-wrap:anywhere}
+ .report-proof-open{border:0;background:none;color:#111;padding:0;min-height:0}
+ .report-proof-open .proof-number{border:0;padding:0}
+ .report-proof-open>span:last-child{display:none}
+}
