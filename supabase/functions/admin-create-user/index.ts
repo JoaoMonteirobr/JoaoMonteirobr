@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.117.2';
-import { corsHeaders, json, readJson, requireAdmin } from '../_shared/http.ts';
+import { corsHeaders, json, readJson, requireAdmin } from './http.ts';
 
 function normalizedBrazilMobile(value: unknown): string | null {
   const raw = String(value || '').replace(/\D/g, '');
