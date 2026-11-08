@@ -20,6 +20,7 @@ function sandbox(role = 'admin') {
     ownerMenus: [],
     tenantMenus: [],
     consultaMenus: [],
+    isMatosSectionPaused: (name) => ['Repasses', 'Documentos', 'Vistorias'].includes(name),
     navIcon: () => '•',
     E: (id) => dom.window.document.getElementById(id),
     esc: (value) => String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;'),
