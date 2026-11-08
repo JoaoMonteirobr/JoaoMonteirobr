@@ -1,8 +1,11 @@
 (function(){
 'use strict';
 
+// Módulo preservado para futura reativação; não inserir aba enquanto pausada.
+if(!isMatosSectionPaused('Repasses')){
 if(adminMenus.indexOf('Repasses')<0){var ai=adminMenus.indexOf('Relatórios');adminMenus.splice(ai>=0?ai:adminMenus.length,0,'Repasses')}
 if(ownerMenus.indexOf('Repasses')<0){var oi=ownerMenus.indexOf('Relatórios');ownerMenus.splice(oi>=0?oi:ownerMenus.length,0,'Repasses')}
+}
 
 var oldNavIcon=window.navIcon;
 window.navIcon=function(x){if(x==='Repasses')return '↗';return oldNavIcon(x)};
@@ -54,6 +57,6 @@ function exportPDF(d,month,rows,bruto,taxa,ded,liq){var w=window.open('','_blank
 function exportExcel(d,month,rows,bruto,taxa,ded,liq){var t='<table><tr><th colspan="5">Matos - Gestão de Aluguéis</th></tr><tr><td colspan="5">Extrato: '+esc(d.p?d.p.nome:'Proprietário')+' - '+mesLabel(month)+'</td></tr><tr><td>Receitas</td><td>'+bruto.toFixed(2)+'</td><td>Taxa administração</td><td>'+taxa.toFixed(2)+'</td></tr><tr><td>Outras despesas</td><td>'+ded.toFixed(2)+'</td><td>Líquido</td><td>'+liq.toFixed(2)+'</td></tr><tr></tr><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Crédito</th><th>Débito</th></tr>'+rows.map(function(x){return '<tr><td>'+dateBR(x.data)+'</td><td>'+esc(x.tipo)+'</td><td>'+esc(x.descricao)+'</td><td>'+Number(x.credito||0).toFixed(2)+'</td><td>'+Number(x.debito||0).toFixed(2)+'</td></tr>'}).join('')+'</table>';var blob=new Blob(['\ufeff<html><head><meta charset="utf-8"></head><body>'+t+'</body></html>'],{type:'application/vnd.ms-excel'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='extrato-'+(d.p?d.p.nome:'proprietario').replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'-'+month+'.xls';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1000)}
 
 var oldLoad=window.load;
-window.load=async function(){if(page==='Repasses')return repassesPage();return oldLoad()};
+window.load=async function(){if(page==='Repasses'&&isMatosSectionPaused(page)){page='Dashboard';return shell()}if(page==='Repasses')return repassesPage();return oldLoad()};
 window.repassesPage=repassesPage;
 })();
