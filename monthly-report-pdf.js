@@ -118,15 +118,94 @@ async function jpegForImage(raw,type){
   return await jpg.arrayBuffer()
  }finally{if(bitmap&&bitmap.close)bitmap.close();if(url)URL.revokeObjectURL(url)}
 }
-function download(bytes,k){
+function download(bytes,k,mode){
  var url=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})),a=document.createElement('a');
- a.href=url;a.download='Matos_Relatorio_'+k+'_com_comprovantes.pdf';a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+ a.href=url;a.download='Matos_Relatorio_'+k+(mode==='integral'?'_integral':'_compacto')+'_com_comprovantes.pdf';a.style.display='none';document.body.appendChild(a);a.click();a.remove();
  setTimeout(function(){URL.revokeObjectURL(url)},60000)
 }
-async function exportReport(k,rows,progress){
+// Modelo compacto: duas pré-visualizações identificadas por folha A4 em paisagem,
+// SEM descartar os arquivos recebidos. Cada original é incorporado como anexo PDF.
+// O PDF integral continua disponível para impressão com tamanho original.
+async function appendCompactProofs(doc,lib,entries,k,normal,bold,pal,progress){
+ var layout=[841.89,595.28], margin=29,gap=14, slotWidth=(layout[0]-2*margin-gap)/2;
+ var sheet=null,used=0,sheets=0,attached=0,visualPages=0;
+ function sheetForNext(){
+  if(!sheet||used===2){
+   sheet=doc.addPage(layout);sheets++;used=0;
+   basicHeader(sheet,'MATOS | Comprovantes organizados',
+    'Competência '+k+'  |  Documentos completos preservados como anexos do PDF',
+    normal,bold,pal);
+   sheet.drawText('Cada quadro identifica o inquilino, o imóvel e a página original do comprovante.',
+    {x:margin,y:504,size:9,font:normal,color:pal.muted});
+   sheet.drawText('Valores indicados são os lançados no sistema; confira os documentos originais quando necessário.',
+    {x:margin,y:25,size:8,font:normal,color:pal.muted});
+  }
+  return sheet
+ }
+ function drawSlot(entry,pageNo,total,image){
+  var sheet=sheetForNext(),r=entry.row,charge=r.charge;
+  var x=margin+used*(slotWidth+gap),y=43,h=444,pad=13;
+  sheet.drawRectangle({x:x,y:y,width:slotWidth,height:h,color:pal.white,borderColor:pal.stroke,borderWidth:1});
+  sheet.drawRectangle({x:x,y:y+h-32,width:slotWidth,height:32,color:pal.soft});
+  sheet.drawRectangle({x:x,y:y+h-32,width:4,height:32,color:pal.gold});
+  sheet.drawText('COMPROVANTE '+entry.number+'  |  ORIGINAL '+pageNo+'/'+total,{
+   x:x+pad,y:y+h-21,size:10,font:bold,color:pal.navy
+  });
+  drawWrapped(sheet,'Inquilino: '+(r.tenant&&r.tenant.nome||'Não informado'),bold,9.4,
+   x+pad,y+h-49,slotWidth-pad*2,pal.ink,2,11);
+  drawWrapped(sheet,'Imóvel: '+(r.property&&r.property.nome||'Não informado'),normal,9,
+   x+pad,y+h-78,slotWidth-pad*2,pal.ink,2,10);
+  sheet.drawText(fit('Valor registrado: '+currency(r.paid)+'    Pago em: '+dateBR(charge.data_pagamento),
+   normal,8.4,slotWidth-pad*2),{x:x+pad,y:y+h-104,size:8.4,font:normal,color:pal.blue});
+  var bx=x+11,by=y+12,bw=slotWidth-22,bh=h-127;
+  sheet.drawRectangle({x:bx,y:by,width:bw,height:bh,color:pal.white,borderColor:pal.stroke,borderWidth:.65});
+  var iw=image.width||1,ih=image.height||1,scale=Math.min(bw/iw,bh/ih);
+  if(!Number.isFinite(scale)||scale<=0)throw new Error('Dimensões inválidas no comprovante '+entry.number);
+  var nw=iw*scale,nh=ih*scale,xx=bx+(bw-nw)/2,yy=by+(bh-nh)/2;
+  if(image.kind==='pdf')sheet.drawPage(image.resource,{x:xx,y:yy,width:nw,height:nh});
+  else sheet.drawImage(image.resource,{x:xx,y:yy,width:nw,height:nh});
+  used++;visualPages++
+ }
+ for(var i=0;i<entries.length;i++){
+  var entry=entries[i],r=entry.row,charge=r.charge;
+  if(progress)progress(i+1,entries.length);
+  try{
+   var file=await fetchPrivateProof(entry),originalBytes=new Uint8Array(file.bytes);
+   // Nomes opacos para evitar colisão e limitar caracteres inválidos.
+   var extension=file.type==='application/pdf'?'.pdf':file.type==='image/png'?'.png':file.type==='image/webp'?'.webp':'.jpg';
+   var filename='Matos_Comprovante_'+entry.number+'_'+k+extension;
+   if(typeof doc.attach!=='function')throw new Error('O gerador PDF não oferece anexos de arquivos originais.');
+   await doc.attach(originalBytes,filename,{
+    mimeType:file.type,
+    description:'Comprovante '+entry.number+' | '+(r.tenant&&r.tenant.nome||'Inquilino não informado')+
+     ' | '+(r.property&&r.property.nome||'Imóvel')+' | competência '+k
+   });
+   attached++;
+   if(file.type==='application/pdf'){
+    var original=await lib.PDFDocument.load(file.bytes),indices=original.getPageIndices();
+    if(!indices.length)throw new Error('O PDF original não contém páginas.');
+    var previews=await doc.embedPdf(original,indices);
+    if(previews.length!==indices.length)throw new Error('Falha ao incorporar páginas do PDF original.');
+    for(var z=0;z<previews.length;z++){
+     drawSlot(entry,z+1,previews.length,{kind:'pdf',resource:previews[z],width:previews[z].width,height:previews[z].height});
+    }
+   }else{
+    var jpeg=await jpegForImage(file.bytes,file.type),im=await doc.embedJpg(jpeg);
+    drawSlot(entry,1,1,{kind:'image',resource:im,width:im.width,height:im.height});
+   }
+  }catch(e){
+   throw new Error('Comprovante '+entry.number+' ('+
+    readable(charge.comprovante_nome||'arquivo')+'): '+e.message+
+    '. Nenhum relatório parcial foi gerado.')
+  }
+ }
+ return {folhas:sheets,previsualizacoes:visualPages,arquivosOriginais:attached}
+}
+async function exportReport(k,rows,progress,options){
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(k))throw new Error('Competência mensal inválida.');
+ var mode=options&&options.mode==='integral'?'integral':'compacto';
  var lib=await loadPdfLib(),doc=await lib.PDFDocument.create(),pal=createPalette(lib);
- doc.setTitle('Matos - Relatório mensal '+k+' com comprovantes');doc.setAuthor('Matos - Gestão de Aluguéis');
+ doc.setTitle('Matos - Relatório mensal '+k+' | '+(mode==='compacto'?'Compacto':'Integral'));doc.setAuthor('Matos - Gestão de Aluguéis');
  var normal=await doc.embedFont(lib.StandardFonts.Helvetica),bold=await doc.embedFont(lib.StandardFonts.HelveticaBold);
  var entries=proofEntries(rows),byId={};entries.forEach(function(e){byId[e.row.charge.id]=e.number});
  var paid=rows.filter(function(r){return r.status==='pago'}),pending=rows.filter(function(r){return r.status!=='pago'});
@@ -195,6 +274,7 @@ async function exportReport(k,rows,progress){
   y-=22
  }
  section('Aluguéis pagos',paid);section('Aluguéis pendentes',pending);
+ if(mode==='integral'){
  ensure(75);text('Índice de comprovantes vinculados',margin,y,13,bold,pal.navy);y-=20;
  if(!entries.length){text('Nenhum comprovante anexado nesta competência.',margin,y-6,9,normal,pal.muted);y-=24}
  entries.forEach(function(entry){
@@ -204,10 +284,19 @@ async function exportReport(k,rows,progress){
   text(raw,margin,y-5,9,normal,pal.ink,w-2*margin);
   y-=18
  });
+ }else{
+  ensure(41);
+  text('Comprovantes numerados na tabela; pré-visualizações identificadas nas páginas seguintes.',margin,y-8,9,normal,pal.muted,w-2*margin);
+  y-=18;
+  ensure(30);
+  text('Os arquivos originais são incorporados como anexos do PDF para consulta integral.',margin,y-8,9,normal,pal.muted,w-2*margin);
+ }
  ensure(35);text('Pagamentos sem comprovante são identificados como \'Sem anexo\'. Datas não informadas não são presumidas.',margin,y-8,8,normal,pal.muted,w-2*margin);
  mainPages.forEach(function(p,i){p.drawText('Matos - Gestao de Alugueis  •  '+k+'  •  Relatorio '+(i+1)+'/'+mainPages.length,
   {x:margin,y:23,size:8,font:normal,color:pal.muted})});
- for(var i=0;i<entries.length;i++){
+ var compactInfo=null;
+ if(mode==='compacto')compactInfo=await appendCompactProofs(doc,lib,entries,k,normal,bold,pal,progress);
+ else for(var i=0;i<entries.length;i++){
   var entry=entries[i],r=entry.row,charge=r.charge;
   if(progress)progress(i+1,entries.length);
   var file;
@@ -237,7 +326,7 @@ async function exportReport(k,rows,progress){
    }
   }catch(error){throw new Error('Anexo '+entry.number+' ('+readable(charge.comprovante_nome||'arquivo')+'): '+error.message+'. Nenhum PDF parcial foi gerado.')}
  }
- var bytes=await doc.save();download(bytes,k);return {paginas:doc.getPageCount(),anexos:entries.length}
+ var bytes=await doc.save();download(bytes,k,mode);return {paginas:doc.getPageCount(),anexos:entries.length,modo:mode,originaisIncorporados:compactInfo?compactInfo.arquivosOriginais:0,previsualizacoes:compactInfo?compactInfo.previsualizacoes:0}
 }
 window.MatosMonthlyReport={export:exportReport,proofEntries:proofEntries};
 })();
