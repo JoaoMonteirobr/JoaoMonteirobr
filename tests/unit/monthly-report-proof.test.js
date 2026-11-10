@@ -15,7 +15,7 @@ describe('comprovantes nos pagamentos e PDF mensal', () => {
   }
 
   it('carrega exportador e usa o bucket privado autenticado', () => {
-    expect(index).toContain('/monthly-report-pdf.js?v=2');
+    expect(index).toContain('/monthly-report-pdf.js?v=3');
     expect(report).toContain('/storage/v1/object/authenticated/comprovantes/');
     expect(report).not.toContain('/object/public/comprovantes/');
     expect(report).toContain('Authorization:');
@@ -65,6 +65,8 @@ describe('exportação consolidada sem dados reais', () => {
   function fakePdfEnvironment(options = {}) {
     let downloaded = 0;
     let copiedPages = 0;
+    let attached = [];
+    let embeddedPages = 0;
     let fetched = null;
     const pages = [];
     const font = { widthOfTextAtSize: (text, size) => String(text).length * size * 0.46 };
@@ -74,10 +76,13 @@ describe('exportação consolidada sem dados reais', () => {
       drawText: () => {},
       drawRectangle: () => {},
       drawImage: () => {},
+      drawPage: () => {},
     });
     const pdf = {
       setTitle: () => {},
       setAuthor: () => {},
+      attach: async (bytes, name, meta) => { attached.push({ bytes, name, meta }); },
+      embedPdf: async (_pdf, indices) => { embeddedPages += indices.length; return indices.map(() => ({ width: 310, height: 600 })); },
       embedFont: async () => font,
       embedJpg: async () => ({ width: 1000, height: 1000, scale: (n) => ({ width: 1000 * n, height: 1000 * n }) }),
       addPage: (size) => {
@@ -97,7 +102,7 @@ describe('exportação consolidada sem dados reais', () => {
         create: async () => pdf,
         load: async () => {
           if (options.invalidPdf) throw new Error('documento protegido');
-          return { getPageIndices: () => [0, 1] };
+          return { getPageIndices: () => Array.from({ length: options.sourcePages || 2 }, (_, i) => i) };
         },
       },
       StandardFonts: { Helvetica: 'regular', HelveticaBold: 'bold' },
@@ -108,7 +113,7 @@ describe('exportação consolidada sem dados reais', () => {
       body: { appendChild: () => {} },
       createElement: (tag) => {
         if (tag === 'a') return { style: {}, click: () => { downloaded += 1; }, remove: () => {} };
-        throw new Error('Elemento inesperado: ' + tag);
+        throw new Error(`Elemento inesperado: ${tag}`);
       },
     };
     const ctx = {
@@ -131,6 +136,8 @@ describe('exportação consolidada sem dados reais', () => {
       pages,
       getDownloaded: () => downloaded,
       getCopied: () => copiedPages,
+      getAttached: () => attached,
+      getEmbedded: () => embeddedPages,
       getFetched: () => fetched,
     };
   }
@@ -162,7 +169,7 @@ describe('exportação consolidada sem dados reais', () => {
         data_pagamento: '2026-11-05',
       },
     }];
-    const result = await env.app.export('2026-11', rows);
+    const result = await env.app.export('2026-11', rows, null, {mode:'integral'});
     expect(result.anexos).toBe(1);
     expect(env.getCopied()).toBe(2);
     expect(env.getDownloaded()).toBe(1);
@@ -177,7 +184,48 @@ describe('exportação consolidada sem dados reais', () => {
       tenant: { nome: 'Teste' }, property: { nome: 'Unidade' },
       charge: { id: 'x', comprovante_path: 'pagamentos/x.pdf', comprovante_tipo: 'application/pdf', comprovante_nome: 'x.pdf' },
     }];
-    await expect(env.app.export('2026-11', rows)).rejects.toThrow('Nenhum PDF parcial foi gerado.');
+    await expect(env.app.export('2026-11', rows, null, {mode:'integral'})).rejects.toThrow('Nenhum PDF parcial foi gerado.');
     expect(env.getDownloaded()).toBe(0);
   });
+  it('compacta comprovantes, associa a cada inquilino e mantém os originais íntegros como anexos', async () => {
+    const env = fakePdfEnvironment({ sourcePages: 1 });
+    const rows = ['Joana','Pedro'].map((nome,i) => ({
+      status:'pago',due:'2026-11-05',expected:1000,paid:1000,pending:0,
+      tenant:{nome},property:{nome:`Imóvel ${i}`},
+      charge:{id:`c${i}`,comprovante_path:`pagamentos/p${i}.pdf`,
+        comprovante_nome:`original-${i}.pdf`,comprovante_tipo:'application/pdf',data_pagamento:'2026-11-05'}
+    }));
+    const result = await env.app.export('2026-11',rows);
+    expect(result.modo).toBe('compacto');
+    expect(result.paginas).toBe(2); // Um resumo + uma folha com dois comprovantes
+    expect(result.anexos).toBe(2);
+    expect(result.originaisIncorporados).toBe(2);
+    expect(result.previsualizacoes).toBe(2);
+    expect(env.getAttached()).toHaveLength(2);
+    expect(env.getAttached().map(a => a.name)).toEqual([
+      'Matos_Comprovante_01_2026-11.pdf', 'Matos_Comprovante_02_2026-11.pdf'
+    ]);
+    expect(env.getAttached()[0].bytes.byteLength).toBe(4);
+    expect(env.getAttached()[0].meta.description).toContain('Joana');
+    expect(env.getAttached()[1].meta.description).toContain('Pedro');
+    expect(env.getEmbedded()).toBe(2);
+    expect(env.getCopied()).toBe(0);
+    expect(env.getDownloaded()).toBe(1);
+  });
+
+  it('preserva visualmente todas as páginas de um comprovante com duas páginas', async () => {
+    const env = fakePdfEnvironment({sourcePages:2});
+    const row = [{
+      status:'pago',due:'2026-11-05',expected:700,paid:700,pending:0,
+      tenant:{nome:'Teste'},property:{nome:'Apto'},
+      charge:{id:'c1',comprovante_path:'pagamentos/duplo.pdf',
+        comprovante_nome:'duplo.pdf',comprovante_tipo:'application/pdf',data_pagamento:'2026-11-05'}
+    }];
+    const result = await env.app.export('2026-11',row);
+    expect(result.paginas).toBe(2);
+    expect(result.previsualizacoes).toBe(2);
+    expect(result.originaisIncorporados).toBe(1);
+    expect(env.getAttached()).toHaveLength(1);
+  });
+
 });

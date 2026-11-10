@@ -328,24 +328,30 @@ async function simpleReports(){
   var id=r.charge.id,n=numbers[id],kind=String(r.charge.comprovante_tipo||'').indexOf('pdf')>=0?'PDF':'Imagem';
   return '<article class="proof-gallery-card"><div class="proof-gallery-icon" aria-hidden="true">'+(kind==='PDF'?'PDF':'IMG')+'</div><div class="proof-gallery-content"><span>Comprovante '+esc(n)+' · '+kind+'</span><b>'+esc(r.tenant&&r.tenant.nome||'Inquilino não informado')+'</b><small>'+esc(r.property&&r.property.nome||'Imóvel não informado')+' · '+money(r.paid)+'</small><small>Pagamento: '+(r.charge.data_pagamento?dateBR(r.charge.data_pagamento):'data não informada')+'</small></div><button type="button" class="btn secondary proof-gallery-action" data-proof-id="'+esc(id)+'">Visualizar</button></article>'
  }).join('')+'</div></section>':'<div class="report-no-files" role="note">Nenhum comprovante foi anexado aos pagamentos desta competência.</div>';
- E('content').innerHTML='<div id="printArea" class="matos-monthly-report"><div class="simple-toolbar report-topbar"><div><h2>Relatório mensal</h2><p>Referência '+esc(k)+' · demonstrativo de aluguéis e comprovantes.</p></div><div class="report-actions"><div class="report-export-controls"><label class="report-month-label">Competência'+monthPicker('simpleReportMonth',k)+'</label><button id="simplePrint" class="btn primary" type="button">Baixar PDF completo com anexos</button><button id="simplePrintTable" class="btn secondary" type="button">Imprimir somente tabela</button></div></div></div>'
+ E('content').innerHTML='<div id="printArea" class="matos-monthly-report"><div class="simple-toolbar report-topbar"><div><h2>Relatório mensal</h2><p>Referência '+esc(k)+' · demonstrativo de aluguéis e comprovantes.</p></div><div class="report-actions"><div class="report-export-controls"><label class="report-month-label">Competência'+monthPicker('simpleReportMonth',k)+'</label><button id="simplePrintCompact" class="btn primary" type="button">Baixar PDF compacto</button><button id="simplePrint" class="btn secondary" type="button">Baixar PDF completo com anexos</button><button id="simplePrintTable" class="btn secondary" type="button">Imprimir somente tabela</button></div></div></div>'
   +summaryCards(rows)
-  +'<div class="report-proof-summary"><div><strong>'+files.length+' comprovante'+(files.length===1?'':'s')+' anexado'+(files.length===1?'':'s')+'</strong><span>Arquivos protegidos; o PDF completo inclui seus anexos após o demonstrativo.</span></div><div><strong>'+paid.length+' pago'+(paid.length===1?'':'s')+' · '+pending.length+' pendente'+(pending.length===1?'':'s')+'</strong><span>Datas não cadastradas aparecem como “Não informada”.</span></div></div>'
+  +'<div class="report-proof-summary"><div><strong>'+files.length+' comprovante'+(files.length===1?'':'s')+' anexado'+(files.length===1?'':'s')+'</strong><span>PDF compacto: dois documentos por página, cada um com inquilino, imóvel e valor. Os arquivos originais são preservados como anexos internos.</span></div><div><strong>'+paid.length+' pago'+(paid.length===1?'':'s')+' · '+pending.length+' pendente'+(pending.length===1?'':'s')+'</strong><span>Datas não cadastradas aparecem como “Não informada”.</span></div></div>'
+  +'<div class="report-export-explanation" role="note"><b>Compacto (recomendado):</b> reduz as páginas e inclui os arquivos originais dentro do PDF. Para abrir esses arquivos diretamente, use um leitor que suporte anexos PDF. <b>Completo:</b> mantém todas as páginas dos comprovantes no tamanho original, ideal para impressão e conferência detalhada.</div>'
   +'<div id="reportExportStatus" class="report-export-status" role="status" aria-live="polite"></div>'
   +sec('Pagamentos recebidos',paid,'ok')+sec('Pagamentos pendentes',pending,'bad')+gallery
   +'<p class="report-footnote">Observação: dados financeiros são apresentados conforme os lançamentos da competência selecionada. A ausência de data de pagamento não significa ausência de quitação.</p></div>';
  E('simpleReportMonth').onchange=function(){window._simpleReportMonth=this.value;simpleReports()};
  E('simplePrintTable').onclick=function(){window.print()};
- E('simplePrint').onclick=async function(){
-  var btn=this,msg=E('reportExportStatus');btn.disabled=true;
+ async function gerarRelatorio(modo){
+  var compact=E('simplePrintCompact'),full=E('simplePrint'),msg=E('reportExportStatus');
+  compact.disabled=true;full.disabled=true;
   try{
    if(!window.MatosMonthlyReport||!window.MatosMonthlyReport.export)throw new Error('O módulo de relatório não foi carregado. Atualize a página.');
-   msg.textContent='Preparando relatório PDF e comprovantes...';
-   await window.MatosMonthlyReport.export(k,rows,function(at,total){msg.textContent='Incorporando comprovante '+at+' de '+total+' ao PDF...'});
-   msg.textContent='Relatório PDF completo gerado com sucesso.';
-  }catch(e){msg.textContent='Não foi possível gerar o relatório completo: '+e.message}
-  finally{btn.disabled=false}
- };
+   msg.textContent=modo==='integral'?'Preparando relatório integral...':'Preparando relatório compacto, com os comprovantes originais preservados...';
+   var result=await window.MatosMonthlyReport.export(k,rows,function(at,total){
+    if(E('reportExportStatus'))E('reportExportStatus').textContent='Organizando comprovante '+at+' de '+total+'...';
+   },{mode:modo});
+   msg.textContent='PDF '+(modo==='integral'?'integral':'compacto')+' gerado: '+result.paginas+' página(s), '+result.anexos+' comprovante(s).';
+  }catch(e){msg.textContent='Não foi possível gerar o PDF: '+e.message}
+  finally{compact.disabled=false;full.disabled=false}
+ }
+ E('simplePrintCompact').onclick=function(){gerarRelatorio('compacto')};
+ E('simplePrint').onclick=function(){gerarRelatorio('integral')};
  Array.prototype.forEach.call(E('content').querySelectorAll('[data-proof-id]'),function(b){
   b.onclick=function(){var r=rows.find(function(x){return x.charge&&x.charge.id===b.dataset.proofId});if(r)openProof(r)}
  })

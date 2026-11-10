@@ -170,3 +170,12 @@
  .report-proof-open .proof-number{border:0;padding:0}
  .report-proof-open>span:last-child{display:none}
 }
+
+/* Relatório compacto: diferença entre pré-visualização e original auditável. */
+.report-export-explanation{padding:12px 15px;margin:12px 0 10px;border:1px solid #d3e2f0;border-radius:11px;background:#f7fafd;color:#3d5771;font-size:12px;line-height:1.65}
+.report-export-explanation b{color:#183f69}
+.report-export-controls{display:flex;align-items:end;flex-wrap:wrap;gap:9px}
+.report-export-controls .btn{min-height:43px;white-space:normal;line-height:1.25}
+#simplePrintCompact{font-weight:800}
+@media(max-width:760px){.report-export-explanation{font-size:11.5px;padding:11px}.report-export-controls .btn{width:100%}}
+@media print{.report-export-explanation{display:none!important}}
