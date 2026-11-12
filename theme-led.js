@@ -128,6 +128,23 @@ function addBanner(){
 var lastW=window.innerWidth;
 window.addEventListener('resize',function(){if(Math.abs(window.innerWidth-lastW)<40)return;lastW=window.innerWidth;var cv=document.querySelector('.led-banner canvas');if(cv)drawBanner(cv)});
 
+// ---------- Pílula do menu deslizando até a aba nova ----------
+// O menu é redesenhado a cada troca de aba; guardamos onde a pílula estava e animamos dela até a nova posição.
+var lastPill=null,reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+function slidePill(){
+ var side=document.querySelector('.side'),on=side&&side.querySelector('.nav.on');
+ if(!on){lastPill=null;return}
+ var key=on.dataset.page,pos={top:on.offsetTop,left:on.offsetLeft,width:on.offsetWidth,height:on.offsetHeight};
+ if(on.dataset.ledPill)return;on.dataset.ledPill='1';
+ var from=lastPill;lastPill={key:key,pos:pos};
+ if(!from||from.key===key||reduceMotion||!side.animate||!pos.height)return;
+ var pill=document.createElement('div');pill.className='led-pill';
+ pill.style.cssText='top:'+pos.top+'px;left:'+pos.left+'px;width:'+pos.width+'px;height:'+pos.height+'px';
+ side.insertBefore(pill,side.firstChild);side.classList.add('led-moving');
+ var anim=pill.animate([{transform:'translate('+(from.pos.left-pos.left)+'px,'+(from.pos.top-pos.top)+'px)'},{transform:'translate(0,0)'}],{duration:460,easing:'cubic-bezier(.45,0,.2,1)'});
+ function done(){pill.remove();side.classList.remove('led-moving')}
+ anim.onfinish=done;anim.oncancel=done;
+}
 var queued=false;
-new MutationObserver(function(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;addBanner()})}).observe(document.body,{childList:true,subtree:true});
+new MutationObserver(function(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;slidePill();addBanner()})}).observe(document.body,{childList:true,subtree:true});
 })();

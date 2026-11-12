@@ -197,3 +197,9 @@ html body .side #logout:before{--led-ico:url("data:image/svg+xml,%3Csvg xmlns='h
 html body .appbar .user,html body .appbar .userinfo,html body .appbar .av{cursor:pointer}
 @media(max-width:760px){.perfil-grid,.perfil-info{grid-template-columns:1fr}.perfil-grid .btn{width:100%;min-height:46px}}
 html body .side .nav[data-page="Meu perfil"]:before{--led-ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M10 1.5a4.2 4.2 0 110 8.4 4.2 4.2 0 010-8.4zM2 18.5c0-4.4 3.6-7 8-7s8 2.6 8 7z'/%3E%3C/svg%3E")}
+/* Pílula do menu deslizando entre as abas (theme-led.js) */
+html body .side{isolation:isolate}
+html body .side .nav{position:relative;z-index:1;transition:background .2s,color .25s}
+html body .side .nav:before{transition:color .25s}
+.led-pill{position:absolute;z-index:0;background:#111;border-radius:999px;pointer-events:none;will-change:transform}
+html body .side.led-moving .nav.on{background:transparent!important}
