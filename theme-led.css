@@ -1,0 +1,163 @@
+/* Tema "LED dot-matrix" (teste): off-white, tinta preta, Inter, pílulas pretas, sem brilho colorido.
+   Camada carregada por último: só aparência, sem mudar lógica nem IDs. Para desligar, remova o link no index.html. */
+:root{--navy:#111;--navy2:#1b1b1b;--navy3:#2a2a2a;--blue:#111;--gold:#111;--bg:#f7f7f5;--surface:#fff;--text:#111;--muted:#7b7b7b;--line:#e7e7e3;--green:#1f7a4d;--red:#b3403f;--orange:#a8741a;--purple:#555;--shadow:none;
+ --led-ink:#111;--led-sub:#7b7b7b;--led-mute:#9a9a9a;--led-line:#e7e7e3;--led-soft:#f1f1ee;--led-card:#fff;
+ --led-ok:#1f7a4d;--led-ok-bg:#e9f3ec;--led-bad:#b3403f;--led-bad-bg:#f8eaea;--led-warn:#8a6414;--led-warn-bg:#f6f0e1}
+html body{background:var(--bg)!important;color:var(--led-ink);font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
+
+/* Carregando */
+html body .boot{background:var(--bg)!important}
+html body .bootbox{background:transparent!important;box-shadow:none!important;color:var(--led-ink)}
+html body .spinner{border-color:var(--led-line)!important;border-top-color:var(--led-ink)!important}
+
+/* Barra lateral */
+html body .side{background:var(--bg)!important;color:var(--led-ink)!important;border-right:1px solid var(--led-line)!important;box-shadow:none!important}
+html body .sidebrand{border-bottom:1px solid var(--led-line)!important}
+html body .sidebrand strong{color:var(--led-ink)!important;font-weight:600;letter-spacing:-.01em}
+html body .sidebrand small{color:var(--led-mute)!important;letter-spacing:.04em}
+html body .logo{background:url(/logo-casa-matos.png?v=1) center/contain no-repeat!important;color:transparent!important;box-shadow:none!important;border-radius:0!important;font-size:0!important;width:46px!important;height:40px!important}
+html body .nav{color:#3a3a3a!important;font-weight:500!important;border-radius:999px!important;transition:background .2s,color .2s}
+html body .nav:before{color:#8d8d8d!important}
+html body .nav:hover{background:var(--led-soft)!important;color:#000!important}
+html body .nav.on{background:#111!important;color:#fff!important;box-shadow:none!important}
+html body .nav.on:before{color:#fff!important}
+html body .side-help{background:var(--led-soft)!important;color:var(--led-sub)!important;border:1px solid var(--led-line)!important}
+html body .side-help *{color:inherit!important}
+
+/* Barra superior */
+html body .appbar{background:rgba(247,247,245,.86)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--led-ink)!important;border-bottom:1px solid var(--led-line)!important;box-shadow:none!important}
+html body .appbar .inp,html body .app-search .inp{background:#fff!important;border-color:var(--led-line)!important;color:var(--led-ink)!important;border-radius:999px!important}
+html body .app-search .inp::placeholder{color:var(--led-mute)}
+html body .appbar *{border-color:var(--led-line)}
+html body .nav-toggle,html body .notify-bell,html body .topicon,html body .helpbtn{background:#fff!important;border:1px solid var(--led-line)!important;color:var(--led-ink)!important}
+html body .notify-bell svg{stroke:var(--led-ink)!important}
+html body .appbar .user,html body .appbar .userinfo,html body .appbar .userinfo *{color:var(--led-ink)!important}
+html body .av{background:#111!important;color:#fff!important}
+html body .notify-count{background:#111!important;color:#fff!important}
+
+/* Títulos de página */
+html body .simple-toolbar h2,html body .pagehead h2,html body .gx-head h2{font-weight:500!important;letter-spacing:-.03em!important;color:var(--led-ink)!important;font-size:clamp(24px,2.2vw,32px)!important}
+html body .simple-toolbar p,html body .pagehead p,html body .gx-head p{color:var(--led-sub)!important}
+
+/* Cartões e painéis */
+html body .panel,html body .simple-panel,html body .simple-card,html body .card,html body .settings-card,html body .gx-card,html body .gx-group,html body .gx-detail,html body .gx-filters,html body .gx-empty,html body .mini-stat,html body .iptu-box,html body .iptu-stat{background:var(--led-card)!important;border:1px solid var(--led-line)!important;border-radius:18px!important;box-shadow:none!important;color:var(--led-ink)}
+html body .panel-title h3,html body .panel h3{color:var(--led-ink)!important;font-weight:600!important;letter-spacing:-.015em}
+html body .simple-card b,html body .gx-card>b,html body .card .num,html body .num{color:var(--led-ink)!important;font-weight:500!important;letter-spacing:-.03em}
+html body .simple-card span,html body .simple-card small,html body .gx-card>span{color:var(--led-sub)!important}
+html body .simple-card.positive{border-left:3px solid var(--led-ok)!important}
+html body .simple-card.danger,html body .gx-total{border-left:3px solid var(--led-bad)!important}
+html body .gx-total>b{color:var(--led-bad)!important}
+html body .simple-year-overview>div{background:var(--led-soft)!important;border-color:var(--led-line)!important}
+html body .simple-year-overview b{color:var(--led-ink)!important}
+html body .settings-card i{color:var(--led-ink)!important}
+html body .settings-card:hover{border-color:#111!important}
+
+/* Tabelas */
+html body .tablewrap{border-color:var(--led-line)!important;border-radius:14px}
+html body .table th{background:var(--led-soft)!important;color:var(--led-sub)!important;font-weight:600!important;letter-spacing:.04em}
+html body .table td{border-bottom:1px solid var(--led-line)!important;color:var(--led-ink)}
+html body .table tr:hover td{background:#fafaf8}
+html body .payment-address-heading td{background:#fff!important;color:var(--led-ink)!important;font-weight:600!important;border-top:1px solid var(--led-line)!important}
+html body .payment-category-heading td{background:#fafaf8!important;color:var(--led-sub)!important}
+
+/* Botões: pílulas */
+html body .btn,html body .row-primary,html body .linkmini{border-radius:999px!important;font-weight:500!important;box-shadow:none!important;transition:transform .25s,background .2s}
+html body .btn.primary,html body .primary,html body .row-primary{background:#111!important;color:#fff!important;border:0!important}
+html body .btn.secondary,html body .secondary{background:#fff!important;color:var(--led-ink)!important;border:1px solid var(--led-line)!important}
+html body .btn:hover:not(:disabled),html body .row-primary:hover{transform:translateY(-1px)}
+html body .btn.secondary:hover{border-color:#111!important}
+html body .linkmini,html body .link{color:var(--led-ink)!important}
+html body .danger,html body .gx-danger{color:var(--led-bad)!important}
+
+/* Formulários */
+html body .inp,html body select.inp,html body textarea.inp,html body .main input:not([type=checkbox]):not([type=radio]):not([type=file]),html body .main select{background:#fafaf8!important;border:1px solid #e2e2de!important;border-radius:12px!important;color:var(--led-ink)!important}
+html body .inp:focus,html body .main input:focus,html body .main select:focus,html body textarea:focus{border-color:#111!important;background:#fff!important;box-shadow:none!important}
+html body .lbl{color:#555!important;font-weight:500!important;text-transform:none!important;letter-spacing:0!important}
+
+/* Janelas (modais) */
+html body .modalbg{background:rgba(247,247,245,.6)!important;backdrop-filter:blur(6px)!important;-webkit-backdrop-filter:blur(6px)!important}
+html body .modal{background:#fff!important;border:1px solid var(--led-line);border-radius:22px!important;box-shadow:0 30px 80px -30px rgba(0,0,0,.25)!important}
+html body .modalhead{border-bottom:1px solid var(--led-line)!important;background:#fff!important}
+html body .modalhead h2{font-weight:500!important;letter-spacing:-.02em;color:var(--led-ink)!important}
+html body .modalfoot{border-top:1px solid var(--led-line)!important;background:#fafaf8!important}
+html body .close{background:var(--led-soft)!important;color:var(--led-ink)!important;border-radius:50%!important;border:0!important}
+html body .payment-highlight{background:var(--led-soft)!important;border:1px solid var(--led-line)!important;color:var(--led-ink)!important}
+html body .payment-highlight b{color:var(--led-ink)!important}
+
+/* Avisos e situações (cores suaves) */
+html body .notice{background:var(--led-soft)!important;color:#444!important;border:1px solid var(--led-line)}
+html body .notice.err{background:var(--led-bad-bg)!important;color:var(--led-bad)!important;border-color:#efd6d5}
+html body .notice.success{background:var(--led-ok-bg)!important;color:var(--led-ok)!important;border-color:#d3e8da}
+html body .badge{background:var(--led-soft)!important;color:#444!important;font-weight:600!important}
+html body .badge.green{background:var(--led-ok-bg)!important;color:var(--led-ok)!important}
+html body .badge.red{background:var(--led-bad-bg)!important;color:var(--led-bad)!important}
+html body .badge.yellow{background:var(--led-warn-bg)!important;color:var(--led-warn)!important}
+html body .badge.blue{background:var(--led-soft)!important;color:var(--led-ink)!important}
+
+/* Gastos */
+html body .gx-chip{border-color:var(--led-line)!important;color:var(--led-ink)!important}
+html body .gx-chip.on{background:#111!important;border-color:#111!important;color:#fff!important}
+html body .gx-group h3{background:#fafaf8!important;border-bottom-color:var(--led-line)!important;color:var(--led-ink)!important}
+html body .gx-row{border-bottom-color:var(--led-line)!important;color:var(--led-ink)!important}
+html body .gx-row:hover{background:#fafaf8!important}html body .gx-row.sel{background:var(--led-soft)!important}
+html body .gx-tag{background:var(--led-soft)!important;color:#333!important}
+html body .gx-bytype i{background:var(--led-soft)!important}html body .gx-bytype i u{background:#111!important}
+html body .gx-amount{color:var(--led-ink)!important;font-weight:500!important;letter-spacing:-.03em}
+html body .gx-note,html body .gx-drop,html body .gx-seg{background:#fafaf8!important;border-color:var(--led-line)!important}
+html body .gx-open{color:var(--led-ink)!important}html body .gx-open i.pdf,html body .gx-open i.img{background:#111!important}
+html body .gx-back{background:var(--led-soft)!important;color:var(--led-ink)!important}
+
+/* Comprovantes */
+html body .pay-clip,html body .report-proof-open{background:var(--led-soft)!important;border-color:var(--led-line)!important;color:var(--led-ink)!important}
+
+/* Enfeite de pontos parado no topo do Dashboard (theme-led.js) */
+.led-banner{position:relative;height:120px;margin:0 0 16px;border:1px solid var(--led-line);border-radius:18px;background:#fff;overflow:hidden}
+.led-banner canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.led-banner div{position:absolute;left:22px;top:50%;transform:translateY(-50%);z-index:1;background:linear-gradient(90deg,#fff 70%,rgba(255,255,255,0));padding:8px 40px 8px 0}
+.led-banner b{display:block;font-weight:500;font-size:22px;letter-spacing:-.03em;color:var(--led-ink)}
+.led-banner b span{color:var(--led-mute)}
+.led-banner small{color:var(--led-sub);font-size:13px}
+
+/* Login (theme-led.js) */
+.led-auth{position:relative;height:100vh;min-height:620px;overflow:hidden;background:var(--bg)}
+.led-auth #led_dots{position:absolute;inset:0;width:100%;height:100%;display:block}
+.led-auth nav{position:relative;z-index:3;display:flex;justify-content:center;align-items:center;gap:clamp(18px,2.6vw,40px);padding-top:36px;font-size:13.5px}
+.led-auth .brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;letter-spacing:-.01em}
+.led-auth .brand img{height:30px;width:auto;display:block}
+.led-auth .copy{position:absolute;z-index:3;left:50%;top:24.5%;transform:translateX(-50%);text-align:center;width:min(92vw,720px)}
+.led-auth h1{font-weight:500;letter-spacing:-.035em;line-height:1.04;font-size:clamp(38px,3.75vw,68px);margin:0;color:var(--led-ink)}
+.led-auth h1 span{display:block;color:var(--led-mute)}
+.led-auth .copy p{margin:20px auto 0;max-width:360px;color:var(--led-sub);font-size:clamp(13px,1.02vw,15.5px);line-height:1.4}
+.led-auth .cta{margin-top:clamp(34px,3.6vw,52px);display:inline-block}
+.led-auth .cta button,.led-auth .pill{background:#111;color:#fff;font:500 13.5px Inter,system-ui,sans-serif;padding:11px 20px;border-radius:999px;border:0;cursor:pointer}
+.led-auth .feats{position:absolute;z-index:3;bottom:clamp(28px,6vh,64px);width:100%;display:flex;justify-content:center;flex-wrap:wrap;gap:clamp(26px,4.6vw,66px);padding:0 16px;color:#8d8d8d;font-size:clamp(14px,1.18vw,17px);font-weight:500}
+.led-auth .feats span{display:flex;align-items:center;gap:7px}.led-auth .feats svg{width:17px;height:17px;fill:currentColor}
+.led-veil{position:fixed;inset:0;z-index:20;background:rgba(247,247,245,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;place-items:center;padding:16px}
+.led-veil.open{display:grid}
+.led-card{position:relative;width:min(100%,380px);background:#fff;border:1px solid var(--led-line);border-radius:22px;padding:28px 26px;box-shadow:0 30px 80px -30px rgba(0,0,0,.25)}
+.led-card h2{margin:0;font-weight:500;font-size:22px;letter-spacing:-.02em}
+.led-card>small{display:block;color:var(--led-sub);font-size:13px;margin:6px 0 16px}
+.led-card .lbl{display:block;font-size:12px;margin:12px 0 6px}
+.led-card .pw{position:relative}.led-card .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;color:#8d8d8d;font-size:15px}
+.led-card #signin{width:100%;margin-top:18px;padding:13px}
+.led-card .links{display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:12.5px;color:var(--led-sub)}
+.led-card .link{background:none;border:0;text-decoration:underline;font-size:12.5px;padding:0}
+.led-x{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;border:0;background:var(--led-soft);font-size:16px}
+@media(max-width:760px){
+ .led-auth nav{justify-content:space-between;padding:22px 18px 0}
+ .led-auth .copy{top:20%}
+ .led-auth .feats{gap:14px 24px;font-size:13px}
+ .led-banner{height:96px}.led-banner b{font-size:18px}
+}
+html body .datechip,html body .month-input{border-color:var(--led-line)!important;color:var(--led-ink)!important;background:#fff!important;border-radius:999px!important}
+html body .pagehead .ey,html body .ey{color:var(--led-mute)!important}
+html body .month-input{padding-right:12px!important;min-width:178px}
+/* Restos de azul encontrados na varredura das abas */
+html body .panel-title{background:transparent!important}
+html body .property-subgroup>h4,html body .settings-card>b,html body .proof-gallery-content>b,html body .report-export-explanation>b,html body .report-proof-summary strong,html body .notify-panel,html body .notify-head,html body .notify-list{color:var(--led-ink)!important}
+html body .property-subgroup,html body .report-proof-summary>div,html body .report-export-explanation,html body .proof-number,html body .proof-gallery-card,html body .rowactions>button{border-color:var(--led-line)!important}
+html body .report-proof-summary>div,html body .report-export-explanation,html body .proof-gallery-icon{background:#fafaf8!important}
+html body .notify-head>button,html body .proof-gallery-icon,html body .proof-gallery-content>span{color:var(--led-ink)!important}
+html body .footerbar,html body .footerbar *,html body .notify-empty,html body .report-month-label,html body .report-proof-summary span,html body .report-export-explanation,html body .report-export-status,html body .report-no-proof,html body .proof-gallery-content>small,html body .report-footnote,html body .field>small,html body .settings-card>span{color:var(--led-sub)!important}
+html body .nav-overlay{background:rgba(247,247,245,.6)!important;backdrop-filter:blur(4px)}
+html body .side{box-shadow:none!important}
