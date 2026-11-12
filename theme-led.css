@@ -186,3 +186,14 @@ html body .side .nav[data-page="Documentos"]:before{--led-ico:url("data:image/sv
 html body .side .nav[data-page="Vistorias"]:before{--led-ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M3 1h14v18H3zm3.4 9.2L5 11.6l3.4 3.4L15 8.4 13.6 7l-5.2 5.2z'/%3E%3C/svg%3E")}
 html body .side .nav[data-page="Repasses"]:before{--led-ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M14 1l5 4.5L14 10V7H2V4h12zM6 10v3h12v3H6v3l-5-4.5z'/%3E%3C/svg%3E")}
 html body .side #logout:before{--led-ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M2.5 2h8.5v2.5H5v11h6V18H2.5zM13 5.5l5 4.5-5 4.5V11.4H7.5V8.6H13z'/%3E%3C/svg%3E")}
+/* Meu perfil */
+.perfil-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.perfil-grid .lbl{display:block;margin:12px 0 6px}
+.perfil-grid .btn{margin-top:16px}
+.perfil-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.perfil-info div{background:#fafaf8;border:1px solid var(--led-line);border-radius:12px;padding:10px 12px;min-width:0}
+.perfil-info span{display:block;font-size:12px;color:var(--led-sub)}
+.perfil-info b{display:block;font-weight:500;margin-top:2px;overflow-wrap:anywhere}
+html body .appbar .user,html body .appbar .userinfo,html body .appbar .av{cursor:pointer}
+@media(max-width:760px){.perfil-grid,.perfil-info{grid-template-columns:1fr}.perfil-grid .btn{width:100%;min-height:46px}}
+html body .side .nav[data-page="Meu perfil"]:before{--led-ico:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill-rule='evenodd' d='M10 1.5a4.2 4.2 0 110 8.4 4.2 4.2 0 010-8.4zM2 18.5c0-4.4 3.6-7 8-7s8 2.6 8 7z'/%3E%3C/svg%3E")}
