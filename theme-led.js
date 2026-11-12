@@ -25,12 +25,12 @@ var tiles=null;
 function getTiles(){if(!tiles)tiles={LA:tile(buildings,false),RA:tile(buildings,true),LB:tile(houses,false),RB:tile(houses,true)};return tiles}
 
 // Grade de pontos LED: cada pixel do "campo" vira um ponto, em 5 tamanhos.
-function Grid(cv,density){
+function Grid(cv,density,minStep,rowRatio){
  var self=this;self.cv=cv;self.ctx=cv.getContext('2d');
  self.resize=function(){
   var r=cv.getBoundingClientRect();self.W=Math.max(1,r.width);self.H=Math.max(1,r.height);self.DPR=Math.min(2,window.devicePixelRatio||1);
   cv.width=self.W*self.DPR;cv.height=self.H*self.DPR;self.ctx.setTransform(self.DPR,0,0,self.DPR,0,0);
-  self.step=Math.max(5,self.W/density);self.rowStep=self.step*2.05;self.cols=Math.ceil(self.W/self.step);self.rows=Math.ceil(self.H/self.rowStep);self.R=self.step*.46;
+  self.step=Math.max(minStep||5,self.W/density);self.rowStep=self.step*(rowRatio||2.05);self.cols=Math.ceil(self.W/self.step);self.rows=Math.ceil(self.H/self.rowStep);self.R=self.step*.46;
   self.seeds=new Float32Array(self.cols*self.rows);for(var j=0;j<self.rows;j++)for(var i=0;i<self.cols;i++)self.seeds[j*self.cols+i]=.55*hash(i,j)+.45*hash(j*3.1,7.7);
   self.fA=field();self.fB=field();
  };
@@ -104,15 +104,24 @@ if(document.querySelector('.auth')&&!(window.session&&session.access_token))wind
 
 // ---------- Enfeite parado no Dashboard ----------
 function drawBanner(cv){
- var T=getTiles(),grid=new Grid(cv,230);
- grid.clearFields();grid.place(grid.fA,T.RA,false,0,.4,.56,false);
- grid.draw(3,0,0,function(i){var x=(i+.5)/grid.cols;return smooth(.32,.5,x)},false);
+ // Fileira de casas inteira, encostada à direita, em pontos pequenos para ficar reconhecível.
+ var T=getTiles(),grid=new Grid(cv,600,3.2,1.25),W=grid.W,H=grid.H,hh=H*.86,hw=hh/.481,g=grid.fA;
+ grid.clearFields();
+ g.setTransform(grid.cols/W,0,0,grid.rows/H,0,0);g.imageSmoothingQuality='high';
+ g.drawImage(T.RB,W-hw-18,H-hh-6,hw,hh);
+ grid.draw(3,0,0,function(i){return smooth(.45,.6,(i+.5)/grid.cols)},false);
+}
+// Primeiro nome do perfil; se o cadastro tiver um e-mail no lugar do nome, não mostra.
+function firstName(){
+ var n=String(window.currentProfile&&currentProfile.nome||'').trim();
+ if(!n||n.indexOf('@')>=0)return '';
+ return n.split(/\s+/)[0];
 }
 function addBanner(){
  if(typeof page==='undefined'||page!=='Dashboard')return;
  var c=E('content');if(!c||c.querySelector('.led-banner'))return;
  var bar=c.querySelector('.simple-toolbar');if(!bar)return;
- var nome=(window.currentProfile&&currentProfile.nome||'').split(' ')[0];
+ var nome=firstName();
  bar.insertAdjacentHTML('afterend','<div class="led-banner"><canvas></canvas><div><b><span>'+(nome?'Olá, '+esc(nome)+'.':'Olá.')+'</span> Seus imóveis, em ordem.</b><small>Resumo do mês logo abaixo.</small></div></div>');
  drawBanner(c.querySelector('.led-banner canvas'));
 }
