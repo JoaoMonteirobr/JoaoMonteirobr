@@ -145,6 +145,14 @@ function slidePill(){
  function done(){pill.remove();side.classList.remove('led-moving')}
  anim.onfinish=done;anim.oncancel=done;
 }
+// ---------- Chip de data do topo: troca o caractere "▦" por um calendário desenhado ----------
+var CAL='<svg class="led-cal" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5 1h2v2h6V1h2v2h2.5A1.5 1.5 0 0119 4.5v13a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 011 17.5v-13A1.5 1.5 0 012.5 3H5zM3 8v9h14V8zm2 2h3v3H5z"/></svg>';
+function fixDateChip(){
+ Array.prototype.forEach.call(document.querySelectorAll('.datechip'),function(c){
+  if(c.dataset.ledCal)return;c.dataset.ledCal='1';
+  c.innerHTML=CAL+'<span>'+esc(c.textContent.replace(/^\s*▦\s*/,''))+'</span>';
+ });
+}
 var queued=false;
-new MutationObserver(function(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;slidePill();addBanner()})}).observe(document.body,{childList:true,subtree:true});
+new MutationObserver(function(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;slidePill();fixDateChip();addBanner()})}).observe(document.body,{childList:true,subtree:true});
 })();

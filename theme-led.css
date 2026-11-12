@@ -203,3 +203,5 @@ html body .side .nav{position:relative;z-index:1;transition:background .2s,color
 html body .side .nav:before{transition:color .25s}
 .led-pill{position:absolute;z-index:0;background:#111;border-radius:999px;pointer-events:none;will-change:transform}
 html body .side.led-moving .nav.on{background:transparent!important}
+/* Calendário desenhado no chip de data (theme-led.js) */
+.led-cal{width:14px;height:14px;fill:#8d8d8d;vertical-align:-2px;margin-right:7px}
