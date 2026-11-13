@@ -59,7 +59,7 @@ function groupedPaymentRows(rows,actions){
  }).join('')
 }
 function paymentRows(rows,actions){
- return rows.map(function(r){return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+(r.charge&&r.charge.comprovante_path?' <button type="button" class="pay-clip" data-proof-id="'+esc(r.charge.id)+'" title="Visualizar comprovante" aria-label="Visualizar comprovante de '+esc(r.tenant&&r.tenant.nome||'pagamento')+'">Ver comprovante</button>':'')+'</td><td>'+st(r.status)+'</td>'+(actions?'<td><button class="row-primary" data-pay="'+r.contract.id+'">'+(r.status==='pago'?'Editar':'Informar pagamento')+'</button></td>':'')+'</tr>'}).join('')
+ return rows.map(function(r){var canReverse=actions&&r.charge&&r.charge.id&&(Number(r.charge.valor_pago||0)>0||r.charge.data_pagamento);return '<tr><td><b>'+esc(r.tenant&&r.tenant.nome||'—')+'</b></td><td>'+esc(r.property&&r.property.nome||'—')+'</td><td>'+dateBR(r.due)+'</td><td>'+money(r.expected)+'</td><td>'+money(r.paid)+(r.charge&&r.charge.comprovante_path?' <button type="button" class="pay-clip" data-proof-id="'+esc(r.charge.id)+'" title="Visualizar comprovante" aria-label="Visualizar comprovante de '+esc(r.tenant&&r.tenant.nome||'pagamento')+'">Ver comprovante</button>':'')+'</td><td>'+st(r.status)+'</td>'+(actions?'<td><div class="payment-row-actions"><button type="button" class="row-primary" data-pay="'+esc(r.contract.id)+'">'+(r.status==='pago'?'Editar':'Informar pagamento')+'</button>'+(canReverse?'<button type="button" class="payment-reverse-btn" data-reverse-id="'+esc(r.charge.id)+'" aria-label="Excluir pagamento de '+esc(r.tenant&&r.tenant.nome||'inquilino')+'">Excluir pagamento</button>':'')+'</div></td>':'')+'</tr>'}).join('')
 }
 // Exibe os aluguéis previstos, pagos e pendentes do mês selecionado.
 async function paymentsPage(){
@@ -71,6 +71,53 @@ async function paymentsPage(){
  if(E('manualPayment'))E('manualPayment').onclick=function(){openManualPayment(k)};
  Array.prototype.forEach.call(document.querySelectorAll('[data-pay]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.contract.id===b.dataset.pay});openPayment(r,k)}})
  Array.prototype.forEach.call(document.querySelectorAll('[data-proof-id]'),function(b){b.onclick=function(){var r=rows.find(function(x){return x.charge&&x.charge.id===b.dataset.proofId});if(r)openProof(r)}})
+ Array.prototype.forEach.call(document.querySelectorAll('[data-reverse-id]'),function(b){b.onclick=function(){if(currentRole!=='admin')return;var r=rows.find(function(x){return x.charge&&x.charge.id===b.dataset.reverseId});if(r)openReversePayment(r,k)}})
+}
+// Reverte SOMENTE o recebimento: mantém a cobrança e registra o motivo na auditoria.
+// O servidor exige perfil administrador e processa tudo em uma transação.
+function openReversePayment(row,k){
+ if(currentRole!=='admin'||!row||!row.charge||!row.charge.id)return;
+ var charge=row.charge;
+ if(!(Number(charge.valor_pago||0)>0||charge.data_pagamento))return;
+ if(E('reversePaymentModal'))E('reversePaymentModal').remove();
+ document.body.insertAdjacentHTML('beforeend','<div class="modalbg payment-reverse-overlay" id="reversePaymentModal"><section class="modal simple-modal payment-reverse-modal" role="dialog" aria-modal="true" aria-labelledby="reverseTitle">'
+  +'<div class="modalhead"><div><h2 id="reverseTitle">Excluir pagamento informado</h2><small>Confirme a correção deste lançamento</small></div><button type="button" id="reverseClose" class="close" aria-label="Fechar">×</button></div>'
+  +'<div class="modalbody"><div id="reverseMsg" role="status" aria-live="polite"></div>'
+  +'<div class="reverse-payment-details"><div><span>Inquilino</span><strong>'+esc(row.tenant&&row.tenant.nome||'Não informado')+'</strong></div>'
+  +'<div><span>Imóvel</span><strong>'+esc(row.property&&row.property.nome||'Não informado')+'</strong></div>'
+  +'<div><span>Competência</span><strong>'+esc(k)+'</strong></div>'
+  +'<div><span>Valor a retirar dos recebimentos</span><strong>'+money(Number(charge.valor_pago||0))+'</strong></div></div>'
+  +'<div class="notice reverse-payment-warning"><b>Esta ação desfaz o lançamento no sistema.</b> A cobrança voltará a ficar pendente, os totais serão atualizados e o comprovante deixará de aparecer como quitação. O arquivo original e o registro da alteração serão preservados para auditoria. Não se trata de devolução bancária.</div>'
+  +'<div class="field full"><span class="lbl">Motivo da exclusão *</span><textarea id="reverseReason" class="inp" rows="3" maxlength="240" placeholder="Ex.: pagamento lançado no imóvel errado"></textarea><small>Informe de 8 a 240 caracteres. O motivo ficará registrado na cobrança.</small></div>'
+  +'<label class="reverse-payment-checkbox"><input type="checkbox" id="reverseConfirm"> Confirmo que este lançamento foi informado incorretamente e deve ser retirado.</label>'
+  +'</div><div class="modalfoot"><button id="reverseCancel" type="button" class="btn secondary">Cancelar</button><button id="reverseSave" type="button" class="btn payment-reverse-confirm">Confirmar exclusão</button></div></section></div>');
+ var modal=E('reversePaymentModal'),btn=E('reverseSave'),reason=E('reverseReason');
+ function close(){if(modal&&modal.isConnected)modal.remove()}
+ E('reverseClose').onclick=E('reverseCancel').onclick=close;
+ modal.addEventListener('click',function(e){if(e.target===modal)close()});
+ btn.onclick=async function(){
+  var msg=E('reverseMsg'),why=reason.value.trim();
+  if(why.length<8||why.length>240){msg.innerHTML='<div class="notice err">Informe um motivo de 8 a 240 caracteres.</div>';return}
+  if(!E('reverseConfirm').checked){msg.innerHTML='<div class="notice err">Marque a confirmação para prosseguir.</div>';return}
+  if(currentRole!=='admin'){msg.innerHTML='<div class="notice err">Somente o administrador pode excluir pagamentos.</div>';return}
+  btn.disabled=true;E('reverseCancel').disabled=true;E('reverseClose').disabled=true;
+  msg.innerHTML='<div class="notice">Excluindo o lançamento e atualizando o financeiro...</div>';
+  try{
+   var result=await request('/rest/v1/rpc/estornar_pagamento',{
+    method:'POST',headers:authHeaders(session.access_token),
+    body:JSON.stringify({p_cobranca_id:charge.id,p_motivo:why})
+   });
+   if(!result||result.ok!==true||result.cobranca_id!==charge.id)throw new Error('O servidor não confirmou a exclusão. Atualize a página antes de tentar novamente.');
+   cache.cobrancas=null;cache.financeiro=null;
+   close();
+   await paymentsPage();
+  }catch(err){
+   if(modal.isConnected)msg.innerHTML='<div class="notice err">'+esc(err.message||'Não foi possível excluir o pagamento.')+'</div>';
+  }finally{
+   if(modal.isConnected){btn.disabled=false;E('reverseCancel').disabled=false;E('reverseClose').disabled=false}
+  }
+ };
+ reason.focus();
 }
 async function openQuickPayment(k){
  if(currentRole!=='admin')return;
