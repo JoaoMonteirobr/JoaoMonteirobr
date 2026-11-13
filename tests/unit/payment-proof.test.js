@@ -33,6 +33,6 @@ describe('Informar pagamento', () => {
     const src = read('simple-ui.js');
     const fn = src.slice(src.indexOf('function openPayment('), src.indexOf('// Comprovante de pagamento'));
     expect(fn).toContain("forma_pagamento:E('pay_method').value");
-    expect(read('index.html')).toContain('/simple-ui.js?v=16');
+    expect(read('index.html')).toContain('/simple-ui.js?v=17');
   });
 });
