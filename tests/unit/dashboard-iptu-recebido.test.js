@@ -114,7 +114,7 @@ describe('Dashboard anual — IPTU recebido',()=>{
     expect(css).toContain('@media(max-width:760px)');
     expect(css).toContain('@media(max-width:390px)');
     expect(index).toContain('/simple-ui.js?v=19');
-    expect(index).toContain('/simple-ui.css?v=17');
+    expect(index).toContain('/simple-ui.css?v=18');
     expect(js).toContain("Promise.all([ledgerData(k),dbGet('manutencoes'),dbGet('iptu')])");
   });
 });
