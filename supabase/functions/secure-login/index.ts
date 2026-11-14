@@ -198,7 +198,7 @@ Deno.serve(async (req: Request) => {
     .select('nome,role')
     .eq('user_id', authResult.data.user.id)
     .maybeSingle();
-  const who = profile.data?.nome || email;
+  const who = profile.data?.nome?.trim() || 'Usuário';
   const device = deviceLabel(userAgent);
   const loginTime = new Date().toLocaleString('pt-BR', { timeZone: 'America/Rio_Branco' });
   const alert = await db
