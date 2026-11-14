@@ -245,3 +245,10 @@
  .iptu-received-year,.iptu-received-foot .linkmini{display:none!important}
  .iptu-received-card{break-inside:avoid;border:1px solid #ccc;background:#fff}
 }
+/* IPTU — progresso de parcelas e valores conciliados. */
+.iptu-installment-preview{padding:12px 14px;border-left:3px solid #1e9071;background:#edf8f3;color:#234e3f;font-size:12px;line-height:1.6;margin-top:5px;border-radius:0 9px 9px 0}
+.iptu-review-note{margin:12px 0 4px;padding:10px 12px;background:#fff8ec;border:1px solid #f0dab0;color:#8a581d;border-radius:9px;font-size:11px;line-height:1.5}
+.iptu-received-partial{margin:10px 0 0;padding:9px 12px;border-left:3px solid #1b9b68;color:#316c56;background:#eff9f3;border-radius:0 8px 8px 0;font-size:11px;line-height:1.5}
+#f_parcelas_pagas,#f_numero_parcelas{font-variant-numeric:tabular-nums}
+#f_valor_total[readonly]{background:#f3f8f6;color:#2e594d;cursor:default}
+@media(max-width:600px){.iptu-installment-preview,.iptu-review-note,.iptu-received-partial{font-size:11px;padding:10px}}

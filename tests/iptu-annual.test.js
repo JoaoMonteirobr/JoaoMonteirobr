@@ -31,7 +31,7 @@ describe('IPTU anual', () => {
   });
 
   it('carrega a camada anual após o núcleo do app', () => {
-    expect(index).toContain('/iptu-annual.js?v=2');
-    expect(index.indexOf('/iptu-annual.js?v=2')).toBeGreaterThan(index.indexOf('/app3.js'));
+    expect(index).toContain('/iptu-annual.js?v=3');
+    expect(index.indexOf('/iptu-annual.js?v=3')).toBeGreaterThan(index.indexOf('/app3.js'));
   });
 });

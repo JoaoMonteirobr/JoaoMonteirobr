@@ -164,6 +164,6 @@ describe('IPTU anual sem seleção duplicada', () => {
     expect(source).toContain('recordedIptu(Number(ano.value),rows,id)');
     expect(source).toContain("await dbGet('iptu')");
     expect(source).toContain("window.saveForm=saveForm");
-    expect(html).toContain('/iptu-annual.js?v=2');
+    expect(html).toContain('/iptu-annual.js?v=3');
   });
 });

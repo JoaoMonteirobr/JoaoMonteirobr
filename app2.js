@@ -7,5 +7,39 @@ function bindRowActions(t){Array.prototype.forEach.call(document.querySelectorAl
 async function ensureLookups(){await Promise.all(['proprietarios','imoveis','inquilinos','contratos'].map(function(t){return cache[t]?Promise.resolve(cache[t]):dbGet(t)}))}
 function lookupLabel(table,r){if(table==='contratos'){var im=(cache.imoveis||[]).find(function(x){return x.id===r.imovel_id}),inq=(cache.inquilinos||[]).find(function(x){return x.id===r.inquilino_id});return (im?im.nome:'Contrato')+' — '+(inq?inq.nome:'')+' — '+money(r.aluguel_atual)}return r.nome||r.email||r.id}
 async function openForm(p,row){if(currentRole!=='admin')return;await ensureLookups();var fields=forms[p],id=row&&row.id||null,body='<div id="formmsg"></div><div class="formgrid">';fields.forEach(function(f){var k=f[0],lab=f[1],type=f[2]||'text',req=f[3],v=row&&row[k]!=null?row[k]:'';body+='<div class="field '+(type==='textarea'?'full':'')+'"><span class="lbl">'+esc(lab)+(req?' *':'')+'</span>';if(type==='textarea')body+='<textarea id="f_'+k+'" class="inp">'+esc(v)+'</textarea>';else if(type.indexOf('select:')===0){var vals=type.slice(7).split('|');body+='<select id="f_'+k+'" class="inp"><option value="">Selecione</option>'+vals.map(function(x){return '<option value="'+esc(x)+'" '+(String(v)===String(x)?'selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select>'}else if(type.indexOf('lookup:')===0){var lt=type.slice(7),arr=cache[lt]||[];body+='<select id="f_'+k+'" class="inp"><option value="">Selecione</option>'+arr.map(function(x){return '<option value="'+x.id+'" '+(String(v)===String(x.id)?'selected':'')+'>'+esc(lookupLabel(lt,x))+'</option>'}).join('')+'</select>'}else if(type==='boolean'){body+='<select id="f_'+k+'" class="inp"><option value="true" '+(v===true?'selected':'')+'>Sim</option><option value="false" '+(v===false?'selected':'')+'>Não</option></select>'}else body+='<input id="f_'+k+'" class="inp" type="'+type+'" value="'+esc(v)+'">';body+='</div>'});body+='</div>';document.body.insertAdjacentHTML('beforeend','<div class="modalbg" id="modal"><div class="modal"><div class="modalhead"><h2>'+(id?'Editar ':'Cadastrar ')+esc(p.slice(0,-1))+'</h2><button id="closemodal" class="close">×</button></div><div class="modalbody">'+body+'</div><div class="modalfoot"><button id="cancelmodal" class="btn secondary">Cancelar</button><button id="savemodal" class="btn primary">Salvar</button></div></div></div>');E('closemodal').onclick=E('cancelmodal').onclick=function(){E('modal').remove()};E('savemodal').onclick=function(){saveForm(p,id)}}
-async function saveForm(p,id){if(currentRole!=='admin')return;var fields=forms[p],obj={},msg=E('formmsg');for(var i=0;i<fields.length;i++){var f=fields[i],k=f[0],lab=f[1],type=f[2]||'text',req=f[3],el=E('f_'+k),v=el.value;if(req&&!v){msg.innerHTML='<div class="notice err">Preencha: '+esc(lab)+'</div>';return}if(type==='number')v=v===''?null:Number(String(v).replace(',','.'));else if(type==='boolean')v=v==='true';else if(v==='')v=null;obj[k]=v}if(p==='IPTU'){var mod=obj.modalidade||'a_vista';if(mod==='parcelado'){obj.numero_parcelas=Math.max(1,Number(obj.numero_parcelas||1));obj.valor_parcela=Number(obj.valor_parcela||0);obj.valor_total=obj.numero_parcelas*obj.valor_parcela}else{obj.numero_parcelas=1;obj.valor_cota_unica=Number(obj.valor_cota_unica||obj.valor_total||0);obj.valor_total=obj.valor_cota_unica;obj.valor_parcela=0}if(obj.situacao==='pago'&&!obj.data_pagamento)obj.data_pagamento=new Date().toISOString().slice(0,10);if(obj.situacao==='em_aberto')obj.data_pagamento=null}if(p==='Cobranças'){var hoje=new Date(),venc=obj.vencimento?new Date(obj.vencimento+'T23:59:59'):null,base=Number(obj.aluguel||0)+Number(obj.outros_encargos||0),pago=Number(obj.valor_pago||0),atrasado=venc&&hoje>venc&&pago<base;if(!atrasado){obj.multa=0;obj.juros=0;if(pago>=base&&base>0)obj.status='pago';else if(obj.status==='atrasado')obj.status='pendente'}else{var dias=Math.max(1,Math.floor((hoje-venc)/86400000));obj.multa=base*.10;obj.juros=base*.01*(dias/30);if(obj.status!=='pago')obj.status='atrasado'}}msg.innerHTML='<div class="notice">Salvando...</div>';try{var t=tables[p];if(id)await dbUpdate(t,id,obj);else await dbInsert(t,obj);E('modal').remove();cache[t]=null;load()}catch(e){msg.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}}
+async function saveForm(p,id){if(currentRole!=='admin')return;var fields=forms[p],obj={},msg=E('formmsg');for(var i=0;i<fields.length;i++){var f=fields[i],k=f[0],lab=f[1],type=f[2]||'text',req=f[3],el=E('f_'+k),v=el.value;if(req&&!v){msg.innerHTML='<div class="notice err">Preencha: '+esc(lab)+'</div>';return}if(type==='number')v=v===''?null:Number(String(v).replace(',','.'));else if(type==='boolean')v=v==='true';else if(v==='')v=null;obj[k]=v}if(p==='IPTU'){
+ var mod=obj.modalidade||'a_vista';
+ if(mod==='parcelado'){
+  var numero=Number(obj.numero_parcelas),valor=Number(obj.valor_parcela),pagas=obj.parcelas_pagas;
+  if(!Number.isInteger(numero)||numero<1||numero>120||!Number.isFinite(valor)||valor<=0){
+   msg.innerHTML='<div class="notice err">Informe o número de parcelas (1 a 120) e o valor positivo de cada parcela.</div>';return
+  }
+  if(pagas!=null&&(!Number.isInteger(pagas)||pagas<0||pagas>numero)){
+   msg.innerHTML='<div class="notice err">O número de parcelas pagas deve estar entre zero e o total de parcelas.</div>';return
+  }
+  if(!id&&pagas==null){
+   msg.innerHTML='<div class="notice err">Informe quantas parcelas já foram pagas (use 0 se nenhuma foi paga).</div>';return
+  }
+  obj.numero_parcelas=numero;
+  obj.valor_parcela=Math.round(valor*100)/100;
+  obj.valor_total=Math.round(numero*obj.valor_parcela*100)/100;
+  obj.valor_cota_unica=0;
+  obj.situacao=pagas===numero?'pago':'em_aberto';
+  // Manter datas antigas de parcelas já cadastradas; nunca inventar uma
+  // nova data. Esse campo não é usado em pagamentos parcelados.
+  var antigo=id?(cache.iptu||[]).find(function(x){return x.id===id}):null;
+  obj.data_pagamento=antigo&&antigo.data_pagamento||null;
+ }else{
+  obj.numero_parcelas=1;
+  obj.valor_total=Math.round(Number(obj.valor_total||0)*100)/100;
+  if(!Number.isFinite(obj.valor_total)||obj.valor_total<=0){
+   msg.innerHTML='<div class="notice err">Informe o valor anual do IPTU à vista.</div>';return
+  }
+  obj.valor_cota_unica=obj.valor_total;
+  obj.valor_parcela=0;
+  obj.parcelas_pagas=null;
+  // Data é opcional inclusive quando o IPTU à vista está marcado como pago.
+  if(obj.situacao==='em_aberto')obj.data_pagamento=null;
+ }
+}if(p==='Cobranças'){var hoje=new Date(),venc=obj.vencimento?new Date(obj.vencimento+'T23:59:59'):null,base=Number(obj.aluguel||0)+Number(obj.outros_encargos||0),pago=Number(obj.valor_pago||0),atrasado=venc&&hoje>venc&&pago<base;if(!atrasado){obj.multa=0;obj.juros=0;if(pago>=base&&base>0)obj.status='pago';else if(obj.status==='atrasado')obj.status='pendente'}else{var dias=Math.max(1,Math.floor((hoje-venc)/86400000));obj.multa=base*.10;obj.juros=base*.01*(dias/30);if(obj.status!=='pago')obj.status='atrasado'}}msg.innerHTML='<div class="notice">Salvando...</div>';try{var t=tables[p];if(id)await dbUpdate(t,id,obj);else await dbInsert(t,obj);E('modal').remove();cache[t]=null;load()}catch(e){msg.innerHTML='<div class="notice err">'+esc(e.message)+'</div>'}}
 async function removeRecord(t,id){if(currentRole!=='admin')return;if(!confirm('Tem certeza que deseja excluir este registro?'))return;try{await dbDelete(t,id);cache[t]=null;load()}catch(e){alert(e.message)}}
