@@ -338,12 +338,7 @@ function openContractRegistration(ims,inqs){
 // IPTU tem competência ANUAL. Os valores pagos não são somados à receita
 // mensal de aluguel; cada perfil vê apenas os registros permitidos pelo RLS.
 function iptuDashboardTotals(records,year){
- var rows=(records||[]).filter(function(x){return Number(x.ano)===Number(year)});
- var paid=rows.filter(function(x){return x.situacao==='pago'});
- var pending=rows.filter(function(x){return x.situacao==='em_aberto'||x.situacao==='pendente'});
- function total(list){return list.reduce(function(sum,x){return sum+Number(x.valor_total||0)},0)}
- return {total:total(rows),received:total(paid),pending:total(pending),
-  paidCount:paid.length,pendingCount:pending.length,count:rows.length}
+ return window.MatosIptuAccounting.summary(records,year)
 }
 function iptuDashboardCard(records){
  var years=(records||[]).map(function(x){return Number(x.ano)}).filter(function(y){return Number.isInteger(y)&&y>=2000&&y<=2100});
@@ -358,7 +353,7 @@ function iptuDashboardCard(records){
   +'<label class="iptu-received-year">Ano <select id="dashIptuReceivedYear" class="inp" aria-label="Ano de referência do IPTU">'+options+'</select></label></div>'
   +'<div class="iptu-received-stats"><div class="iptu-received-primary"><span>Recebido em '+year+'</span><strong>'+money(summary.received)+'</strong><small>'+summary.paidCount+' de '+summary.count+' IPTUs pagos</small></div>'
   +'<div class="iptu-received-secondary"><div><span>Total cadastrado</span><strong>'+money(summary.total)+'</strong></div><div><span>Pendente</span><strong>'+money(summary.pending)+'</strong></div></div></div>'
-  +'<div class="iptu-received-foot"><small>Resumo separado dos aluguéis para evitar dupla contagem.</small><button type="button" class="linkmini" id="dashIptuOpen">Ver IPTUs →</button></div></section>'
+  +'<div class="iptu-received-foot"><small>Resumo separado dos aluguéis para evitar dupla contagem.</small><button type="button" class="linkmini" id="dashIptuOpen">Ver IPTUs →</button></div>'+(summary.partialCount?'<p class="iptu-received-partial">'+summary.partialCount+' IPTU(s) com parcelas parcialmente pagas já incluídas no valor recebido.</p>':'')+(summary.unreviewedCount?'<p class="iptu-review-note">'+summary.unreviewedCount+' parcelado(s) sem quantidade de parcelas confirmada(s). O valor recebido pode ser maior após a conferência.</p>':'')+'</section>'
 }
 function bindIptuDashboardCard(records){
  var year=E('dashIptuReceivedYear'),link=E('dashIptuOpen');

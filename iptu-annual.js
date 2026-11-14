@@ -14,17 +14,31 @@ if(forms)forms.IPTU=[
  ['situacao','Situação','select:pago|em_aberto',1],
  ['modalidade','Forma de pagamento','select:a_vista|parcelado',1],
  ['numero_parcelas','Número de parcelas','number'],
+ ['parcelas_pagas','Quantas parcelas foram pagas?','number'],
  ['valor_parcela','Valor de cada parcela','number'],
  ['data_pagamento','Data do pagamento','date'],
  ['observacoes','Observações','textarea']
 ];
 
 var previousColumns=columnsFor;
-columnsFor=function(p){if(p==='IPTU')return [['imovel_id','Imóvel'],['ano','Ano de referência'],['valor_total','Valor anual'],['modalidade','Forma'],['situacao','Situação']];return previousColumns(p)};
+columnsFor=function(p){if(p==='IPTU')return [['imovel_id','Imóvel'],['ano','Ano de referência'],['valor_total','Valor anual'],['modalidade','Forma'],['iptu_progresso','Parcelas pagas'],['iptu_recebido','Recebido'],['iptu_saldo','Pendente'],['situacao','Situação']];return previousColumns(p)};
 window.columnsFor=columnsFor;
 var previousFormat=formatCell;
-formatCell=function(k,v){if(k==='situacao')return iptuStatus(v);return previousFormat(k,v)};
+formatCell=function(k,v){if(k==='situacao')return iptuStatus(v);if(k==='iptu_recebido'||k==='iptu_saldo')return money(v);if(k==='iptu_progresso')return esc(v);return previousFormat(k,v)};
 window.formatCell=formatCell;
+// Dados calculados exclusivamente para exibição, sem colunas duplicadas no banco.
+var previousTableHtml=typeof tableHtml==='function'?tableHtml:null;
+window.tableHtml=function(rows,cols){
+ if(cols&&cols.some(function(col){return col[0]==='iptu_recebido'})){
+  rows=(rows||[]).map(function(row){
+   var values=window.MatosIptuAccounting.detail(row);
+   return Object.assign({},row,{iptu_progresso:values.progress,
+    iptu_recebido:values.received,iptu_saldo:values.pending})
+  })
+ }
+ return previousTableHtml?previousTableHtml(rows,cols):''
+};
+
 
 function decorateIptuForm(p){
  if(p==='Imóveis'){
@@ -45,6 +59,59 @@ function decorateIptuForm(p){
   var info=document.createElement('div');info.id='iptu_annual_notice';info.className='notice full';info.innerHTML='<b>Registro anual:</b> informe o valor total do IPTU para o ano selecionado. Use <b>Pendente</b> enquanto houver saldo a pagar e <b>Pago</b> quando estiver quitado.';grid2.insertBefore(info,grid2.firstChild)
  }
 }
+
+// Modal de IPTU com campos condicionais e previsão financeira em tempo real.
+function configureIptuInstallments(row){
+ var mode=document.getElementById('f_modalidade'),count=document.getElementById('f_numero_parcelas'),
+  paid=document.getElementById('f_parcelas_pagas'),per=document.getElementById('f_valor_parcela'),
+  total=document.getElementById('f_valor_total'),date=document.getElementById('f_data_pagamento'),
+  status=document.getElementById('f_situacao');
+ if(!mode||!paid||!count||!per||!total||!status)return;
+ var dateField=date&&date.closest('.field'),numberField=count.closest('.field'),
+  paidField=paid.closest('.field'),perField=per.closest('.field');
+ var box=document.getElementById('iptu_installment_preview');
+ if(!box){
+  box=document.createElement('div');box.id='iptu_installment_preview';box.className='notice full iptu-installment-preview';
+  paidField.insertAdjacentElement('afterend',box)
+ }
+ // O histórico pode ter parcelas sem quantidade confirmada: nesse caso, não
+ // substituir automaticamente o desconhecido por zero.
+ if(!row&&paid.value==='')paid.value='0';
+ function refresh(){
+  var parcelado=mode.value==='parcelado';
+  numberField.style.display=parcelado?'':'none';
+  paidField.style.display=parcelado?'':'none';
+  perField.style.display=parcelado?'':'none';
+  if(dateField)dateField.style.display=parcelado?'none':'';
+  if(date){
+   date.required=false;
+   date.title=parcelado?'Data não necessária para IPTU parcelado':'Data opcional para pagamento à vista';
+  }
+  status.disabled=parcelado;
+  total.readOnly=parcelado;
+  var n=Number(count.value),v=Number(per.value),p=paid.value===''?null:Number(paid.value);
+  if(parcelado&&Number.isInteger(n)&&n>0&&Number.isFinite(v)&&v>0){
+   total.value=(Math.round(n*v*100)/100).toFixed(2);
+  }
+  if(parcelado){
+   status.value=p!==null&&Number.isInteger(n)&&n>0&&p===n?'pago':'em_aberto';
+   var simulated={modalidade:'parcelado',valor_total:Number(total.value)||0,
+    numero_parcelas:n,valor_parcela:v,parcelas_pagas:paid.value,
+    situacao:status.value};
+   var values=window.MatosIptuAccounting.detail(simulated);
+   box.style.display='';
+   box.textContent=values.needsReview
+    ? 'Quantidade de parcelas ainda não conferida. O saldo ficará sinalizado no Dashboard até você informar o número pago.'
+    : 'Recebido: '+money(values.received)+' · Falta pagar: '+money(values.pending)+
+      ' · '+values.progress+' parcelas. A data é necessária somente se você desejar informá-la no pagamento à vista.';
+  }else{
+   box.style.display='none'
+  }
+ }
+ [mode,count,paid,per,total].forEach(function(el){el.addEventListener('change',refresh);el.addEventListener('input',refresh)});
+ refresh()
+}
+
 // Não permitir novo lançamento anual de um imóvel que já tenha registro naquele ano.
 // Isso inclui IPTUs pagos e pendentes: ambos devem ser corrigidos pelo botão "Editar".
 function recordedIptu(year,rows,exceptId){
@@ -107,6 +174,9 @@ openForm=async function(p,row){
  var out=await previousOpenForm.apply(this,arguments);
  decorateIptuForm(p,row);
  if(p==='IPTU'){
+  configureIptuInstallments(row)
+ }
+ if(p==='IPTU'){
   refreshIptuPropertyOptions(row);
   var year=document.getElementById('f_ano');
   if(year)year.addEventListener('change',function(){refreshIptuPropertyOptions(row)})
@@ -145,12 +215,19 @@ saveForm=async function(p,id){
 window.saveForm=saveForm;
 
 function availableYears(rows){var years=(rows||[]).map(function(r){return Number(r.ano)}).filter(Boolean);if(years.indexOf(currentYear)<0)years.push(currentYear);return years.filter(function(v,i,a){return a.indexOf(v)===i}).sort(function(a,b){return b-a})}
-function annualSummary(rows,year){var r=(rows||[]).filter(function(x){return Number(x.ano)===Number(year)}),pending=r.filter(function(x){return isPending(x.situacao)}),paid=r.filter(function(x){return x.situacao==='pago'});return {rows:r,pending:pending,paid:paid,total:r.reduce(function(s,x){return s+Number(x.valor_total||0)},0),pendingValue:pending.reduce(function(s,x){return s+Number(x.valor_total||0)},0),paidValue:paid.reduce(function(s,x){return s+Number(x.valor_total||0)},0)}}
+function annualSummary(rows,year){
+ var r=(rows||[]).filter(function(x){return Number(x.ano)===Number(year)});
+ var summary=window.MatosIptuAccounting.summary(r,year);
+ var pending=r.filter(function(x){return window.MatosIptuAccounting.detail(x).pending>0});
+ var paid=r.filter(function(x){return window.MatosIptuAccounting.detail(x).paid});
+ return {rows:r,pending:pending,paid:paid,total:summary.total,pendingValue:summary.pending,
+  paidValue:summary.received,partialCount:summary.partialCount,unreviewedCount:summary.unreviewedCount}
+}
 function dashboardIptu(){
  var rows=cache.iptu||[],years=availableYears(rows),year=window._dashIptuYear&&years.indexOf(Number(window._dashIptuYear))>=0?Number(window._dashIptuYear):(years.indexOf(currentYear)>=0?currentYear:years[0]),s=annualSummary(rows,year);
  var panels=Array.prototype.slice.call(document.querySelectorAll('.panel')),panel=panels.find(function(x){var h=x.querySelector('h3');return h&&h.textContent.indexOf('IPTU em aberto')>=0});if(!panel)return;
  var opts=years.map(function(y){return '<option value="'+y+'" '+(y===year?'selected':'')+'>'+y+'</option>'}).join('');
- panel.innerHTML='<div class="panel-title"><div><h3>IPTU — referência '+year+'</h3><div class="muted">Valores anuais, sem mistura com cobranças mensais.</div></div><select id="dashIptuYear" class="inp" style="width:auto">'+opts+'</select></div><div class="iptu-box"><div class="iptu-stat"><small class="muted">Pendente no ano</small><b style="color:var(--red)">'+money(s.pendingValue)+'</b></div><div class="iptu-stat"><small class="muted">Pago no ano</small><b style="color:var(--green)">'+money(s.paidValue)+'</b></div><div class="iptu-stat"><small class="muted">Registros pendentes</small><b>'+s.pending.length+'</b></div><div class="iptu-stat"><small class="muted">Total anual cadastrado</small><b>'+money(s.total)+'</b></div></div><button class="linkmini" style="margin-top:12px" onclick="goQuick(\'IPTU\')">Ver lançamentos de IPTU →</button>';
+ panel.innerHTML='<div class="panel-title"><div><h3>IPTU — referência '+year+'</h3><div class="muted">Valores anuais, incluindo parcelas já quitadas e separadas das cobranças mensais.</div></div><select id="dashIptuYear" class="inp" style="width:auto">'+opts+'</select></div><div class="iptu-box"><div class="iptu-stat"><small class="muted">Pendente no ano</small><b style="color:var(--red)">'+money(s.pendingValue)+'</b></div><div class="iptu-stat"><small class="muted">Pago no ano</small><b style="color:var(--green)">'+money(s.paidValue)+'</b></div><div class="iptu-stat"><small class="muted">Registros pendentes</small><b>'+s.pending.length+'</b></div><div class="iptu-stat"><small class="muted">Total anual cadastrado</small><b>'+money(s.total)+'</b></div></div>'+(s.unreviewedCount?'<p class="iptu-review-note">'+s.unreviewedCount+' parcelado(s) ainda sem quantidade de parcelas confirmada(s). O recebido não inclui esses valores não conferidos.</p>':'')+'<button class="linkmini" style="margin-top:12px" onclick="goQuick(\'IPTU\')">Ver lançamentos de IPTU →</button>';
  var sel=document.getElementById('dashIptuYear');if(sel)sel.onchange=function(){window._dashIptuYear=Number(this.value);dashboardIptu()}
 }
 var previousDash=window.dash||dash;
@@ -160,8 +237,12 @@ window.dash=dash;
 function iptuReportSection(rows){
  var years=availableYears(rows),year=window._reportIptuYear&&years.indexOf(Number(window._reportIptuYear))>=0?Number(window._reportIptuYear):(years.indexOf(currentYear)>=0?currentYear:years[0]),s=annualSummary(rows,year),ims=cache.imoveis||[];
  var opts=years.map(function(y){return '<option value="'+y+'" '+(y===year?'selected':'')+'>'+y+'</option>'}).join('');
- var body=s.rows.map(function(r){var im=ims.find(function(x){return x.id===r.imovel_id});return '<tr><td>'+esc(im?im.nome:'—')+'</td><td>'+esc(r.ano)+'</td><td>'+money(r.valor_total||0)+'</td><td>'+esc(r.modalidade==='a_vista'?'À vista':'Parcelado')+'</td><td>'+iptuStatus(r.situacao)+'</td><td>'+dateBR(r.data_pagamento)+'</td></tr>'}).join('');
- return '<div class="panel" id="reportIptuAnnual"><div class="toolbar"><div><h3 style="margin:0">Relatório anual de IPTU — '+year+'</h3><div class="muted">Separado do relatório mensal de aluguéis para evitar interpretação incorreta.</div></div><select id="reportIptuYear" class="inp" style="width:auto">'+opts+'</select></div><div class="mini-fin" style="margin:14px 0"><div class="mini-stat"><small>Total anual</small><b>'+money(s.total)+'</b></div><div class="mini-stat"><small>Pago</small><b style="color:var(--green)">'+money(s.paidValue)+'</b></div><div class="mini-stat"><small>Pendente</small><b style="color:var(--red)">'+money(s.pendingValue)+'</b></div><div class="mini-stat"><small>Registros pendentes</small><b>'+s.pending.length+'</b></div></div><div class="tablewrap"><table class="table"><thead><tr><th>Imóvel</th><th>Ano</th><th>Valor anual</th><th>Forma</th><th>Situação</th><th>Pagamento</th></tr></thead><tbody>'+(body||'<tr><td colspan="6" class="empty">Nenhum IPTU cadastrado para este ano.</td></tr>')+'</tbody></table></div></div>'
+ var body=s.rows.map(function(r){
+  var im=ims.find(function(x){return x.id===r.imovel_id});
+  var v=window.MatosIptuAccounting.detail(r);
+  return '<tr><td>'+esc(im?im.nome:'—')+'</td><td>'+esc(r.ano)+'</td><td>'+money(v.total)+'</td><td>'+esc(r.modalidade==='a_vista'?'À vista':'Parcelado')+'</td><td>'+esc(v.progress)+'</td><td>'+money(v.received)+'</td><td>'+money(v.pending)+'</td><td>'+iptuStatus(v.paid?'pago':r.situacao)+'</td><td>'+(r.modalidade==='a_vista'?dateBR(r.data_pagamento):'—')+'</td></tr>'
+ }).join('');
+ return '<div class="panel" id="reportIptuAnnual"><div class="toolbar"><div><h3 style="margin:0">Relatório anual de IPTU — '+year+'</h3><div class="muted">Separado do relatório mensal de aluguéis para evitar interpretação incorreta.</div></div><select id="reportIptuYear" class="inp" style="width:auto">'+opts+'</select></div><div class="mini-fin" style="margin:14px 0"><div class="mini-stat"><small>Total anual</small><b>'+money(s.total)+'</b></div><div class="mini-stat"><small>Pago</small><b style="color:var(--green)">'+money(s.paidValue)+'</b></div><div class="mini-stat"><small>Pendente</small><b style="color:var(--red)">'+money(s.pendingValue)+'</b></div><div class="mini-stat"><small>Registros pendentes</small><b>'+s.pending.length+'</b></div></div>'+(s.unreviewedCount?'<p class="iptu-review-note">'+s.unreviewedCount+' IPTU(s) parcelado(s) exigem confirmação das parcelas pagas antes de conciliação completa.</p>':'')+'<div class="tablewrap"><table class="table"><thead><tr><th>Imóvel</th><th>Ano</th><th>Valor anual</th><th>Forma</th><th>Parcelas pagas</th><th>Recebido</th><th>Pendente</th><th>Situação</th><th>Data à vista</th></tr></thead><tbody>'+(body||'<tr><td colspan="9" class="empty">Nenhum IPTU cadastrado para este ano.</td></tr>')+'</tbody></table></div></div>'
 }
 function bindReportYear(rows){var s=document.getElementById('reportIptuYear');if(s)s.onchange=function(){window._reportIptuYear=Number(this.value);var old=document.getElementById('reportIptuAnnual');if(old){var wrap=document.createElement('div');wrap.innerHTML=iptuReportSection(rows);old.replaceWith(wrap.firstChild);bindReportYear(rows)}}}
 var previousReports=window.reports||reports;

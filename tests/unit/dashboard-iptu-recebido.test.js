@@ -6,6 +6,7 @@ import { JSDOM } from 'jsdom';
 
 const read = (p) => fs.readFileSync(path.join(process.cwd(), p), 'utf8');
 const js = read('simple-ui.js');
+const accountingJs=read('iptu-accounting.js');
 const css = read('simple-ui.css');
 const index = read('index.html');
 
@@ -32,6 +33,8 @@ function sandbox(records=iptuRecords) {
   const end=js.indexOf('// =====================================================\n// DASHBOARD',begin);
   expect(begin).toBeGreaterThan(0);
   expect(end).toBeGreaterThan(begin);
+  vm.runInNewContext(accountingJs,context);
+  context.window.MatosIptuAccounting=context.MatosIptuAccounting||context.window.MatosIptuAccounting;
   const helpers=vm.runInNewContext(js.slice(begin,end)+'\n({iptuDashboardTotals,iptuDashboardCard,bindIptuDashboardCard});',context);
   function render() {
     window.document.getElementById('content').innerHTML=helpers.iptuDashboardCard(records);
@@ -110,8 +113,8 @@ describe('Dashboard anual — IPTU recebido',()=>{
     expect(css).toContain('.iptu-received-primary');
     expect(css).toContain('@media(max-width:760px)');
     expect(css).toContain('@media(max-width:390px)');
-    expect(index).toContain('/simple-ui.js?v=18');
-    expect(index).toContain('/simple-ui.css?v=16');
+    expect(index).toContain('/simple-ui.js?v=19');
+    expect(index).toContain('/simple-ui.css?v=17');
     expect(js).toContain("Promise.all([ledgerData(k),dbGet('manutencoes'),dbGet('iptu')])");
   });
 });
