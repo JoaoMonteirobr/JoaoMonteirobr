@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 154" fill="none" aria-label="Matos — Gestão de Aluguéis">
+  <title>Matos — Gestão de Aluguéis</title>
+  <defs>
+    <linearGradient id="navy" x1="17" y1="21" x2="149" y2="139" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#07559C"/><stop offset=".47" stop-color="#002B60"/><stop offset="1" stop-color="#001941"/>
+    </linearGradient>
+    <linearGradient id="orange" x1="34" y1="60" x2="92" y2="141" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF9D19"/><stop offset=".55" stop-color="#FF7800"/><stop offset="1" stop-color="#E86100"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="145%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#002F67" flood-opacity=".14"/>
+    </filter>
+  </defs>
+  <style>
+    .mark-roof{animation:roof-appear .9s cubic-bezier(.2,.8,.2,1) both;transform-origin:80px 70px}
+    .mark-homes{animation:home-appear 1s cubic-bezier(.2,.7,.2,1) .17s both;transform-origin:80px 120px}
+    .mark-window{animation:window-twinkle 5.4s ease-in-out infinite}
+    .mark-window:nth-of-type(even){animation-delay:-2.2s}
+    .mark-curve{stroke-dasharray:270;stroke-dashoffset:270;animation:curve-draw 1.15s ease-out .48s forwards}
+    @keyframes roof-appear{from{opacity:0;transform:translateY(7px) scale(.95)}to{opacity:1;transform:none}}
+    @keyframes home-appear{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+    @keyframes window-twinkle{0%,87%,100%{opacity:1}92%{opacity:.6}}
+    @keyframes curve-draw{to{stroke-dashoffset:0}}
+    @media(prefers-reduced-motion:reduce){.mark-roof,.mark-homes,.mark-window,.mark-curve{animation:none;opacity:1;stroke-dashoffset:0}}
+  </style>
+  <g filter="url(#shadow)">
+    <path class="mark-roof" d="M12 70.5 74.4 18c3.5-3 7-3 10.4 0L111 40.2V29.8c0-2.6 2.1-4.8 4.8-4.8h9.4c2.7 0 4.8 2.2 4.8 4.8v26.4L149 71c3.2 2.6 3.6 7.4 1 10.5-2.6 3.2-7.4 3.6-10.5 1L81 32.7 22.8 82.3c-3.1 2.7-7.9 2.3-10.5-.9-2.6-3.2-2.3-7.9.7-10.9Z" fill="url(#navy)"/>
+    <g class="mark-homes">
+      <path d="M28 82.7 47.6 69l30.6 20.5V132H28V82.7Z" fill="url(#orange)"/>
+      <path d="m47 67 32 21.1v6.7L47 74.2 28 86.7v-6.8L47 67Z" fill="#FF7C00"/>
+      <path d="M40 87h10.3v10.7H40V87Zm16 4h9.6v10.7H56V91Zm-16 13.4h10.3v10.6H40v-10.6Zm16 3.4h9.6v10.5H56v-10.5Zm-16 13.6h10.3V132H40v-10.6Zm16 0h9.6V132H56v-10.6Z" fill="#FFF4EA"/>
+      <path d="M92 100.8 112.5 84 137 104v27.6H92v-30.8Z" fill="#fff" stroke="#002E67" stroke-width="5.2" stroke-linejoin="round"/>
+      <path d="m86.2 104 26.3-23 29.6 23.3" stroke="url(#navy)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M109.2 111h8.1v8.4h-8.1V111Zm11.8 0h8.1v8.4H121V111Zm-11.8 11.5h8.1v8.3h-8.1v-8.3Zm11.8 0h8.1v8.3H121v-8.3Z" fill="#003A78"/>
+      <path d="M83.4 70.1h6.9l7.7 10.8 7.8-10.8h6.9v29.2h-7.8V83.2l-6.8 9.1h-.4l-6.8-9.1v16.1h-7.5V70.1Z" fill="url(#orange)"/>
+      <path d="M16 136.5c33.2-15.7 93.5-15.6 128 1.3" stroke="#FFE5C4" stroke-width="9" stroke-linecap="round" opacity=".9"/>
+      <path class="mark-curve" d="M13 139.5c35.5-17.9 99.4-17.2 133 0" stroke="url(#orange)" stroke-width="8" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
