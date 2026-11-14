@@ -70,7 +70,7 @@ describe('proprietário · consulta geral com telefone e senha', () => {
   });
 
   it('publica os scripts atualizados sem invalidar testes prévios', () => {
-    expect(index).toContain('/app1.js?v=20261108-3');
+    expect(index).toContain('/app1.js?v=20261113-4');
     expect(index).toContain('/app3.js?v=20261108-2');
     expect(index).toContain('/simple-ui.js?v=17');
     expect(index).toContain('/contact-security.js?v=2');
