@@ -34,6 +34,12 @@ describe('infrastructure security contracts', () => {
     expect(source).not.toContain('const key = email');
   });
 
+  test('login autenticado usa identificação segura mesmo com nome ausente', () => {
+    const source = read('supabase/functions/secure-login/index.ts');
+    expect(source).toContain("const who = profile.data?.nome?.trim() || 'Usuário';");
+    expect(source).not.toContain('const who = profile.data?.nome || email;');
+  });
+
   test('database migration applies least privilege and atomic queue claims', () => {
     const migrations = fs
       .readdirSync(path.join(root, 'supabase/migrations'))
