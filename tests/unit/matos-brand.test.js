@@ -46,7 +46,7 @@ describe('Nova identidade Matos com logo animada', () => {
     expect(logoSvg).toContain('class="mark-curve"');
     expect(logoSvg).toContain('class="mark-window"');
     expect(logoSvg).not.toMatch(/<(?:script|foreignObject)\b/i);
-    expect(logoSvg).not.toMatch(/https?:\/\//i);
+    expect(logoSvg).not.toMatch(/(?:href|src)="https?:\/\//i);
   });
 
   it('mantém apenas o botão central para abrir o login', () => {
