@@ -1,0 +1,147 @@
+/* Identidade Matos — navegação e página de entrada.
+   Marca vetorial azul-marinho/laranja com animações discretas; toda animação
+   respeita a preferência do navegador por movimento reduzido. */
+:root{
+ --matos-brand-navy:#002c60;
+ --matos-brand-orange:#f4780b;
+}
+
+/* O símbolo é o mesmo SVG no painel administrativo e no login. */
+html body .sidebrand.matos-dashboard-brand{
+ display:flex;align-items:center;gap:10px;min-height:82px;
+ padding:7px 7px 17px;
+}
+html body .sidebrand.matos-dashboard-brand .logo{
+ flex:0 0 57px!important;width:57px!important;height:57px!important;
+ background-color:transparent!important;
+ background-image:url('/matos-marca.svg?v=1')!important;
+ background-repeat:no-repeat!important;background-position:center!important;
+ background-size:contain!important;
+ box-shadow:none!important;border:0!important;border-radius:0!important;
+ font-size:0!important;color:transparent!important;
+ transform-origin:center 65%;
+ animation:matos-mark-float 5.4s ease-in-out infinite;
+ will-change:auto;
+}
+html body .sidebrand.matos-dashboard-brand .matos-sidebar-words{
+ min-width:0;display:flex;flex-direction:column;gap:4px;
+}
+html body .sidebrand.matos-dashboard-brand strong{
+ color:var(--matos-brand-navy)!important;
+ font-size:19px!important;font-weight:850!important;
+ letter-spacing:.065em!important;line-height:1.02;
+}
+html body .sidebrand.matos-dashboard-brand small{
+ color:#a75a12!important;font-size:9px!important;font-weight:780!important;
+ letter-spacing:.07em!important;line-height:1.28;
+}
+html body .sidebrand.matos-dashboard-brand:hover .logo{
+ animation:matos-mark-hover .6s cubic-bezier(.2,.65,.2,1) both;
+ filter:drop-shadow(0 4px 7px rgba(0,54,115,.14));
+}
+
+/* Landing: apenas a marca na parte superior.
+   O único CTA que abre o modal permanece no centro da tela. */
+html body .led-auth nav{
+ justify-content:center;align-items:center;
+ gap:0;padding-top:27px;
+}
+html body .led-auth .matos-brand-landing{
+ display:flex;align-items:center;justify-content:center;gap:12px;
+ user-select:none;min-width:0;
+ animation:matos-wordmark-enter .7s cubic-bezier(.2,.7,.15,1) both;
+}
+html body .led-auth .matos-mark-frame{
+ width:69px;height:69px;position:relative;
+ display:grid;place-items:center;flex:none;
+}
+html body .led-auth .matos-mark-frame img{
+ display:block;width:65px!important;height:65px!important;
+ max-width:100%;object-fit:contain;
+ filter:drop-shadow(0 4px 7px rgba(0,39,86,.13));
+ animation:matos-mark-float 5.4s ease-in-out infinite;
+ transition:transform .35s cubic-bezier(.2,.7,.2,1),filter .35s;
+}
+html body .led-auth .matos-mark-frame::after{
+ content:"";position:absolute;inset:5px;
+ border-radius:50%;pointer-events:none;
+ background:radial-gradient(circle at 77% 16%,rgba(255,138,30,.13),transparent 44%);
+ animation:matos-brand-halo 6.4s ease-in-out infinite;
+}
+html body .led-auth .matos-brand-landing:hover img{
+ transform:translateY(-2px) rotate(-2deg) scale(1.045);
+ filter:drop-shadow(0 5px 10px rgba(0,39,86,.21));
+ animation:none;
+}
+html body .led-auth .matos-brand-words{
+ display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+ text-align:left;
+}
+html body .led-auth .matos-brand-words strong{
+ font-size:24px;line-height:1;letter-spacing:.065em;
+ font-weight:850;color:var(--matos-brand-navy);
+}
+html body .led-auth .matos-brand-words small{
+ font-size:9px;line-height:1.2;letter-spacing:.15em;
+ font-weight:760;color:#a75a12;
+}
+html body .led-auth .cta button{
+ transition:transform .25s ease,box-shadow .25s ease,background .25s ease;
+}
+html body .led-auth .cta button:hover{
+ transform:translateY(-2px);
+ box-shadow:0 9px 23px rgba(0,0,0,.15);
+}
+html body .led-auth .cta button:focus-visible{
+ outline:3px solid var(--matos-brand-orange);outline-offset:4px;
+}
+
+/* Modal de autenticação mantém o foco/funcionalidade do botão central. */
+html body .led-veil.open .led-card{
+ animation:matos-dialog-enter .25s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes matos-mark-float{
+ 0%,100%{transform:translateY(0)}
+ 50%{transform:translateY(-2.5px)}
+}
+@keyframes matos-mark-hover{
+ 0%{transform:translateY(0) scale(1)}
+ 55%{transform:translateY(-3px) scale(1.045)}
+ 100%{transform:translateY(-1px) scale(1.02)}
+}
+@keyframes matos-wordmark-enter{
+ from{opacity:0;transform:translateY(-8px) scale(.96)}
+ to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes matos-brand-halo{
+ 0%,100%{opacity:.35;transform:scale(.98)}
+ 50%{opacity:.95;transform:scale(1.05)}
+}
+@keyframes matos-dialog-enter{
+ from{opacity:0;transform:translateY(11px) scale(.98)}
+ to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(max-width:760px){
+ html body .led-auth nav{justify-content:center;padding:18px 12px 0}
+ html body .led-auth .matos-mark-frame{width:59px;height:59px}
+ html body .led-auth .matos-mark-frame img{width:57px!important;height:57px!important}
+ html body .led-auth .matos-brand-words strong{font-size:20px}
+ html body .led-auth .matos-brand-words small{font-size:8px}
+ html body .sidebrand.matos-dashboard-brand .logo{
+  flex-basis:49px!important;width:49px!important;height:49px!important
+ }
+ html body .sidebrand.matos-dashboard-brand strong{font-size:17px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ html body .sidebrand.matos-dashboard-brand .logo,
+ html body .led-auth .matos-brand-landing,
+ html body .led-auth .matos-mark-frame img,
+ html body .led-auth .matos-mark-frame::after,
+ html body .led-veil.open .led-card{
+  animation:none!important;transition:none!important;
+ }
+ html body .led-auth .cta button{transition:none!important}
+ html body .led-auth .matos-brand-landing:hover img{
+  animation:none!important;transform:none!important
+ }
+}
