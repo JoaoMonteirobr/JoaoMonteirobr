@@ -45,9 +45,104 @@ function decorateIptuForm(p){
   var info=document.createElement('div');info.id='iptu_annual_notice';info.className='notice full';info.innerHTML='<b>Registro anual:</b> informe o valor total do IPTU para o ano selecionado. Use <b>Pendente</b> enquanto houver saldo a pagar e <b>Pago</b> quando estiver quitado.';grid2.insertBefore(info,grid2.firstChild)
  }
 }
+// Não permitir novo lançamento anual de um imóvel que já tenha registro naquele ano.
+// Isso inclui IPTUs pagos e pendentes: ambos devem ser corrigidos pelo botão "Editar".
+function recordedIptu(year,rows,exceptId){
+ return (rows||[]).filter(function(r){
+  return Number(r.ano)===Number(year)&&(!exceptId||r.id!==exceptId)
+ })
+}
+function availableIptuProperties(year,rows,exceptId,properties){
+ var registered=recordedIptu(year,rows,exceptId);
+ var blocked=new Set(registered.map(function(r){return r.imovel_id}));
+ return (properties||[]).filter(function(imovel){return !blocked.has(imovel.id)})
+}
+function refreshIptuPropertyOptions(row){
+ var yearSelect=document.getElementById('f_ano'),select=document.getElementById('f_imovel_id');
+ if(!yearSelect||!select)return;
+ var year=Number(yearSelect.value),existing=cache.iptu||[],all=cache.imoveis||[];
+ var permitted=availableIptuProperties(year,existing,row&&row.id,all);
+ var chosen=select.value;
+ // Ao editar, manter o imóvel originalmente selecionado sem permitir outro
+ // lançamento duplicado do mesmo ano.
+ if(row&&row.imovel_id&&permitted.some(function(x){return x.id===row.imovel_id})){
+  if(!chosen)chosen=row.imovel_id
+ }
+ var accepted=permitted.some(function(x){return x.id===chosen});
+ select.innerHTML='<option value="">Selecione um imóvel disponível</option>'+
+  permitted.map(function(imovel){return '<option value="'+esc(imovel.id)+'">'+esc(lookupLabel('imoveis',imovel))+'</option>'}).join('');
+ select.value=accepted?chosen:'';
+ select.disabled=permitted.length===0;
+ var blocked=recordedIptu(year,existing,row&&row.id),paid=blocked.filter(function(x){return x.situacao==='pago'}).length;
+ var notice=document.getElementById('iptu_available_notice');
+ if(!notice){
+  notice=document.createElement('div');
+  notice.id='iptu_available_notice';
+  notice.className='notice full';
+  select.closest('.field').appendChild(notice)
+ }
+ notice.textContent=permitted.length
+  ? permitted.length+' imóveis disponíveis para '+year+'. '+blocked.length+
+    ' já cadastrados (sendo '+paid+' pagos) foram retirados da lista. Para corrigir um lançamento, use Editar na tabela de IPTU.'
+  : 'Todos os imóveis já possuem registro de IPTU em '+year+'. Para alterar o pagamento, use Editar na tabela de IPTU.';
+ var save=document.getElementById('savemodal');
+ if(save)save.disabled=!permitted.length;
+}
 var previousOpenForm=window.openForm||openForm;
-openForm=async function(p,row){var out=await previousOpenForm.apply(this,arguments);setTimeout(function(){decorateIptuForm(p)},0);return out};
+openForm=async function(p,row){
+ if(p==='IPTU'&&currentRole==='admin'){
+  // Consultar o banco novamente ao abrir: não depender da lista em cache.
+  try{await dbGet('iptu')}
+  catch(e){
+   var content=document.getElementById('content');
+   if(content){
+    var warning=document.createElement('div');
+    warning.className='notice err';
+    warning.textContent='Não foi possível conferir os IPTUs cadastrados. Tente novamente antes de incluir um novo registro.';
+    content.prepend(warning)
+   }
+   return
+  }
+ }
+ var out=await previousOpenForm.apply(this,arguments);
+ decorateIptuForm(p,row);
+ if(p==='IPTU'){
+  refreshIptuPropertyOptions(row);
+  var year=document.getElementById('f_ano');
+  if(year)year.addEventListener('change',function(){refreshIptuPropertyOptions(row)})
+ }
+ return out
+};
 window.openForm=openForm;
+
+// Além de esconder a opção, conferir no servidor antes de gravar.
+// A restrição UNIQUE (imovel_id, ano) do PostgreSQL permanece como
+// proteção contra cadastros simultâneos em abas/navegadores diferentes.
+var previousSaveForm=window.saveForm||saveForm;
+saveForm=async function(p,id){
+ if(p==='IPTU'&&currentRole==='admin'){
+  var imovel=document.getElementById('f_imovel_id'),ano=document.getElementById('f_ano');
+  var msg=document.getElementById('formmsg');
+  if(!imovel||!imovel.value||!ano||!ano.value){
+   if(msg)msg.textContent='Selecione um imóvel disponível e o ano de referência.';
+   return
+  }
+  try{
+   var rows=await dbGet('iptu');
+   var exists=recordedIptu(Number(ano.value),rows,id).some(function(r){return r.imovel_id===imovel.value});
+   if(exists){
+    if(msg)msg.textContent='Este imóvel já possui IPTU cadastrado para '+ano.value+'. Edite o lançamento existente na tabela, em vez de duplicá-lo.';
+    refreshIptuPropertyOptions(id?rows.find(function(r){return r.id===id}):null);
+    return
+   }
+  }catch(e){
+   if(msg)msg.textContent='Não foi possível verificar duplicidade no banco. Tente novamente.';
+   return
+  }
+ }
+ return previousSaveForm.apply(this,arguments)
+};
+window.saveForm=saveForm;
 
 function availableYears(rows){var years=(rows||[]).map(function(r){return Number(r.ano)}).filter(Boolean);if(years.indexOf(currentYear)<0)years.push(currentYear);return years.filter(function(v,i,a){return a.indexOf(v)===i}).sort(function(a,b){return b-a})}
 function annualSummary(rows,year){var r=(rows||[]).filter(function(x){return Number(x.ano)===Number(year)}),pending=r.filter(function(x){return isPending(x.situacao)}),paid=r.filter(function(x){return x.situacao==='pago'});return {rows:r,pending:pending,paid:paid,total:r.reduce(function(s,x){return s+Number(x.valor_total||0)},0),pendingValue:pending.reduce(function(s,x){return s+Number(x.valor_total||0)},0),paidValue:paid.reduce(function(s,x){return s+Number(x.valor_total||0)},0)}}
