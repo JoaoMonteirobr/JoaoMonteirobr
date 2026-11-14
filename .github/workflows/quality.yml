@@ -39,6 +39,10 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Testar interface publicada em produção no desktop e mobile
+        run: npm run test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: https://gestao-alugueis-jp.vercel.app
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
