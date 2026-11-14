@@ -28,10 +28,10 @@
     <g class="mark-homes">
       <path d="M28 82.7 47.6 69l30.6 20.5V132H28V82.7Z" fill="url(#orange)"/>
       <path d="m47 67 32 21.1v6.7L47 74.2 28 86.7v-6.8L47 67Z" fill="#FF7C00"/>
-      <path d="M40 87h10.3v10.7H40V87Zm16 4h9.6v10.7H56V91Zm-16 13.4h10.3v10.6H40v-10.6Zm16 3.4h9.6v10.5H56v-10.5Zm-16 13.6h10.3V132H40v-10.6Zm16 0h9.6V132H56v-10.6Z" fill="#FFF4EA"/>
+      <path class="mark-window" d="M40 87h10.3v10.7H40V87Zm16 4h9.6v10.7H56V91Zm-16 13.4h10.3v10.6H40v-10.6Zm16 3.4h9.6v10.5H56v-10.5Zm-16 13.6h10.3V132H40v-10.6Zm16 0h9.6V132H56v-10.6Z" fill="#FFF4EA"/>
       <path d="M92 100.8 112.5 84 137 104v27.6H92v-30.8Z" fill="#fff" stroke="#002E67" stroke-width="5.2" stroke-linejoin="round"/>
       <path d="m86.2 104 26.3-23 29.6 23.3" stroke="url(#navy)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
-      <path d="M109.2 111h8.1v8.4h-8.1V111Zm11.8 0h8.1v8.4H121V111Zm-11.8 11.5h8.1v8.3h-8.1v-8.3Zm11.8 0h8.1v8.3H121v-8.3Z" fill="#003A78"/>
+      <path class="mark-window" d="M109.2 111h8.1v8.4h-8.1V111Zm11.8 0h8.1v8.4H121V111Zm-11.8 11.5h8.1v8.3h-8.1v-8.3Zm11.8 0h8.1v8.3H121v-8.3Z" fill="#003A78"/>
       <path d="M83.4 70.1h6.9l7.7 10.8 7.8-10.8h6.9v29.2h-7.8V83.2l-6.8 9.1h-.4l-6.8-9.1v16.1h-7.5V70.1Z" fill="url(#orange)"/>
       <path d="M16 136.5c33.2-15.7 93.5-15.6 128 1.3" stroke="#FFE5C4" stroke-width="9" stroke-linecap="round" opacity=".9"/>
       <path class="mark-curve" d="M13 139.5c35.5-17.9 99.4-17.2 133 0" stroke="url(#orange)" stroke-width="8" stroke-linecap="round"/>
