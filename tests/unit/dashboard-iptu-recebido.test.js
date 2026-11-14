@@ -108,6 +108,17 @@ describe('Dashboard anual — IPTU recebido',()=>{
     expect(totals.total).toBe(7000.20);
   });
 
+
+  it('deixa valores IPTU visualmente menores que os números principais dos aluguéis',()=>{
+    // Os indicadores de aluguel são a referência da hierarquia visual.
+    expect(css).toContain('.simple-card b{display:block;font-size:24px');
+    expect(css).toContain('.iptu-received-primary strong{font-size:clamp(17px,1.45vw,20px)');
+    expect(css).toContain('.iptu-received-secondary strong{font-size:clamp(12px,1.15vw,15px)');
+    expect(css).toContain('.iptu-received-primary strong{font-size:19px}');
+    expect(css).toContain('.iptu-received-primary strong{font-size:17px}');
+    expect(index).toContain('/simple-ui.css?v=18');
+  });
+
   it('adapta-se ao celular e mantém o valor separado da soma de aluguéis',()=>{
     expect(css).toContain('.iptu-received-card');
     expect(css).toContain('.iptu-received-primary');
