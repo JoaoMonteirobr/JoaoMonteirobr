@@ -15,7 +15,7 @@ html body .side{background:var(--bg)!important;color:var(--led-ink)!important;bo
 html body .sidebrand{border-bottom:1px solid var(--led-line)!important}
 html body .sidebrand strong{color:var(--led-ink)!important;font-weight:600;letter-spacing:-.01em}
 html body .sidebrand small{color:var(--led-mute)!important;letter-spacing:.04em}
-html body .logo{background:url(/logo-casa-matos.png?v=1) center/contain no-repeat!important;color:transparent!important;box-shadow:none!important;border-radius:0!important;font-size:0!important;width:46px!important;height:40px!important}
+html body .logo{background:url(/matos-marca.svg?v=1) center/contain no-repeat!important;color:transparent!important;box-shadow:none!important;border-radius:0!important;font-size:0!important;width:46px!important;height:40px!important}
 html body .nav{color:#3a3a3a!important;font-weight:500!important;border-radius:999px!important;transition:background .2s,color .2s}
 html body .nav:before{color:#8d8d8d!important}
 html body .nav:hover{background:var(--led-soft)!important;color:#000!important}
