@@ -135,7 +135,7 @@ describe('excluir pagamento — estorno seguro', () => {
   });
 
   it('atualiza o script da interface para não usar versão antiga em cache', () => {
-    expect(read('index.html')).toContain('/simple-ui.js?v=17');
-    expect(read('index.html')).toContain('/simple-ui.css?v=15');
+    expect(read('index.html')).toContain('/simple-ui.js?v=18');
+    expect(read('index.html')).toContain('/simple-ui.css?v=16');
   });
 });
