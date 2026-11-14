@@ -174,7 +174,7 @@ describe('Gerenciamento de acessos — tela do administrador',()=>{
   expect(backend).toContain("action === 'update_access'");
   expect(backend).toContain("action === 'delete_access'");
   expect(backend).toContain("action === 'reset_password'");
-  expect(backend).toContain("profile.role !== 'admin'");
+  expect(backend).toContain('manageableRoles.includes(data.role');
   expect(backend).toContain("admin.auth.admin.deleteUser");
   expect(backend).toContain("admin.auth.admin.updateUserById");
   expect(backend).toContain("await auditAccess");
