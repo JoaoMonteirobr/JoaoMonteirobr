@@ -14,7 +14,7 @@ html body .sidebrand.matos-dashboard-brand{
 html body .sidebrand.matos-dashboard-brand .logo{
  flex:0 0 57px!important;width:57px!important;height:57px!important;
  background-color:transparent!important;
- background-image:url('/matos-marca.svg?v=1')!important;
+ background-image:url('/matos-marca.svg?v=2')!important;
  background-repeat:no-repeat!important;background-position:center!important;
  background-size:contain!important;
  box-shadow:none!important;border:0!important;border-radius:0!important;
@@ -144,4 +144,102 @@ html body .led-veil.open .led-card{
  html body .led-auth .matos-brand-landing:hover img{
   animation:none!important;transform:none!important
  }
+}
+
+/* MOBILE: logomarca sempre visível na barra superior, mesmo com o menu fechado. */
+html body .appbar .matos-mobile-top-brand{display:none}
+@keyframes matos-mobile-mark-motion{
+  0%,100%{transform:translate3d(0,0,0) rotate(0deg) scale(1)}
+  26%{transform:translate3d(0,-2px,0) rotate(-2deg) scale(1.045)}
+  53%{transform:translate3d(0,1px,0) rotate(1deg) scale(1.018)}
+  75%{transform:translate3d(0,-1px,0) rotate(-1deg) scale(1.03)}
+}
+@keyframes matos-mobile-ring{
+  0%,100%{transform:scale(.87);opacity:0}
+  18%{opacity:.72}
+  62%{transform:scale(1.13);opacity:.2}
+  70%{opacity:0}
+}
+@keyframes matos-mobile-reveal{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:820px){
+  html body .appbar .matos-mobile-top-brand{
+    display:flex;align-items:center;gap:6px;margin-right:auto;
+    min-width:0;max-width:calc(100vw - 165px);
+    height:54px;flex:0 1 auto;white-space:nowrap;
+    animation:matos-mobile-reveal .55s ease-out both;
+  }
+  html body .appbar .matos-mobile-top-symbol{
+    flex:0 0 47px;width:47px;height:47px;
+    display:grid;place-items:center;position:relative;isolation:isolate;
+  }
+  html body .appbar .matos-mobile-top-symbol::before{
+    content:"";position:absolute;inset:4px;z-index:-1;
+    border:1px solid rgba(244,120,11,.55);
+    border-radius:50%;pointer-events:none;
+    animation:matos-mobile-ring 4.4s ease-out 1s infinite;
+  }
+  html body .appbar .matos-mobile-top-symbol img{
+    display:block;width:44px;height:44px;object-fit:contain;
+    filter:drop-shadow(0 2px 3px rgba(0,39,86,.09));
+    animation:matos-mobile-mark-motion 4.4s ease-in-out infinite;
+  }
+  html body .appbar .matos-mobile-top-word{
+    display:flex;flex-direction:column;gap:2px;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;
+  }
+  html body .appbar .matos-mobile-top-word strong{
+    display:block;font-size:15px;line-height:1.05;
+    color:var(--matos-brand-navy)!important;
+    font-weight:850;letter-spacing:.055em;
+  }
+  html body .appbar .matos-mobile-top-word small{
+    display:block;font-size:7px;font-weight:780;
+    color:#a75a12!important;letter-spacing:.045em;
+  }
+  /* No login, a marca é maior e anima continuamente, sem gesto de mouse. */
+  html body .led-auth .matos-mark-frame{width:78px;height:78px}
+  html body .led-auth .matos-mark-frame img{
+    width:75px!important;height:75px!important;
+    animation:matos-mobile-mark-motion 4.4s ease-in-out infinite;
+  }
+  html body .led-auth .matos-mark-frame::after{
+    animation:matos-brand-halo 4.4s ease-in-out infinite;
+  }
+  html body .led-auth .matos-brand-words strong{font-size:23px}
+  html body .led-auth .matos-brand-words small{font-size:8px}
+  html body .sidebrand.matos-dashboard-brand .logo{
+    animation:matos-mobile-mark-motion 4.4s ease-in-out infinite;
+  }
+}
+@media(max-width:380px){
+  html body .appbar .matos-mobile-top-brand{gap:2px;max-width:calc(100vw - 151px)}
+  html body .appbar .matos-mobile-top-symbol{
+    flex-basis:39px;width:39px;height:39px;
+  }
+  html body .appbar .matos-mobile-top-symbol img{width:38px;height:38px}
+  html body .appbar .matos-mobile-top-word strong{font-size:13px}
+  html body .appbar .matos-mobile-top-word small{display:none}
+}
+@media(hover:none){
+  html body .sidebrand.matos-dashboard-brand:hover .logo{
+    animation:matos-mobile-mark-motion 4.4s ease-in-out infinite;
+    filter:none;
+  }
+  html body .led-auth .matos-brand-landing:hover img{
+    animation:matos-mobile-mark-motion 4.4s ease-in-out infinite;
+    transform:none;filter:drop-shadow(0 4px 7px rgba(0,39,86,.13));
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html body .appbar .matos-mobile-top-brand,
+  html body .appbar .matos-mobile-top-symbol::before,
+  html body .appbar .matos-mobile-top-symbol img,
+  html body .led-auth .matos-mark-frame img,
+  html body .led-auth .matos-mark-frame::after,
+  html body .sidebrand.matos-dashboard-brand .logo{
+    animation:none!important;transition:none!important;
+  }
 }

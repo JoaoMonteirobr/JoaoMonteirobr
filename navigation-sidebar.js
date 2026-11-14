@@ -8,7 +8,17 @@ function setDesktopCollapsed(v){try{localStorage.setItem(PREF_KEY,v?'1':'0')}cat
 function applyState(){var sh=document.querySelector('.shell');if(!sh)return;var mobile=isMobile();sh.classList.toggle('sidebar-open',mobile&&mobileOpen);sh.classList.toggle('sidebar-collapsed',!mobile&&desktopCollapsed());var btn=document.getElementById('nav_toggle');if(btn){var expanded=mobile?mobileOpen:!desktopCollapsed();btn.setAttribute('aria-expanded',expanded?'true':'false');btn.setAttribute('aria-label',mobile?(mobileOpen?'Fechar menu':'Abrir menu'):(desktopCollapsed()?'Expandir menu':'Recolher menu'));btn.textContent=mobileOpen&&mobile?'×':'☰'}}
 function toggleSidebar(){if(isMobile())mobileOpen=!mobileOpen;else setDesktopCollapsed(!desktopCollapsed());applyState()}
 function closeMobile(){if(isMobile()&&mobileOpen){mobileOpen=false;applyState()}}
-function decorate(){var sh=document.querySelector('.shell'),bar=document.querySelector('.appbar'),side=document.querySelector('.side');if(!sh||!bar||!side)return;if(!document.getElementById('nav_toggle')){var btn=document.createElement('button');btn.id='nav_toggle';btn.className='nav-toggle';btn.type='button';btn.textContent='☰';btn.setAttribute('aria-controls','sidebar_navigation');btn.onclick=toggleSidebar;bar.insertBefore(btn,bar.firstChild)}side.id='sidebar_navigation';if(!sh.querySelector('.nav-overlay')){var overlay=document.createElement('div');overlay.className='nav-overlay';overlay.setAttribute('aria-hidden','true');overlay.onclick=closeMobile;sh.appendChild(overlay)}Array.prototype.forEach.call(side.querySelectorAll('[data-page],#logout'),function(el){el.addEventListener('click',closeMobile)});applyState()}
+function decorate(){var sh=document.querySelector('.shell'),bar=document.querySelector('.appbar'),side=document.querySelector('.side');if(!sh||!bar||!side)return;if(!document.getElementById('nav_toggle')){var btn=document.createElement('button');btn.id='nav_toggle';btn.className='nav-toggle';btn.type='button';btn.textContent='☰';btn.setAttribute('aria-controls','sidebar_navigation');btn.onclick=toggleSidebar;bar.insertBefore(btn,bar.firstChild)}
+// A barra lateral fica recolhida no celular: manter a marca visível também no topo.
+if(!bar.querySelector('.matos-mobile-top-brand')){
+ var brand=document.createElement('div');
+ brand.className='matos-mobile-top-brand';
+ brand.setAttribute('aria-label','Matos — Gestão de Aluguéis');
+ brand.innerHTML='<span class="matos-mobile-top-symbol"><img src="/matos-marca.svg?v=2" alt="" width="46" height="46"></span><span class="matos-mobile-top-word"><strong>MATOS</strong><small>GESTÃO DE ALUGUÉIS</small></span>';
+ var toggle=document.getElementById('nav_toggle');
+ if(toggle)toggle.insertAdjacentElement('afterend',brand);else bar.insertBefore(brand,bar.firstChild);
+}
+side.id='sidebar_navigation';if(!sh.querySelector('.nav-overlay')){var overlay=document.createElement('div');overlay.className='nav-overlay';overlay.setAttribute('aria-hidden','true');overlay.onclick=closeMobile;sh.appendChild(overlay)}Array.prototype.forEach.call(side.querySelectorAll('[data-page],#logout'),function(el){el.addEventListener('click',closeMobile)});applyState()}
 var previousShell=window.shell||shell;shell=function(){var out=previousShell.apply(this,arguments);decorate();return out};window.shell=shell;
 window.addEventListener('resize',function(){if(!isMobile())mobileOpen=false;applyState()});
 setTimeout(decorate,0);

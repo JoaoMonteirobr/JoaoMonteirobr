@@ -45,6 +45,8 @@ describe('Nova identidade Matos com logo animada', () => {
     expect(logoSvg).toContain('class="mark-roof"');
     expect(logoSvg).toContain('class="mark-curve"');
     expect(logoSvg).toContain('class="mark-window"');
+    expect(logoSvg).toContain('class="mark-spark"');
+    expect(logoSvg).toContain('@keyframes matos-orbit-glint');
     expect(logoSvg).not.toMatch(/<(?:script|foreignObject)\b/i);
     expect(logoSvg).not.toMatch(/(?:href|src)="https?:\/\//i);
   });
@@ -57,7 +59,7 @@ describe('Nova identidade Matos com logo animada', () => {
     expect(doc.querySelector('.led-auth nav .matos-brand-words strong').textContent).toBe('MATOS');
     expect(doc.querySelector('.led-auth nav .matos-brand-words small').textContent)
       .toBe('GESTÃO DE ALUGUÉIS');
-    expect(doc.querySelector('.led-auth nav img').getAttribute('src')).toBe('/matos-marca.svg?v=1');
+    expect(doc.querySelector('.led-auth nav img').getAttribute('src')).toBe('/matos-marca.svg?v=2');
     expect(doc.querySelectorAll('[data-led-open]')).toHaveLength(1);
     expect(doc.querySelector('.cta [data-led-open]').textContent).toBe('Entrar no sistema');
     expect(doc.querySelector('#led_veil').classList.contains('open')).toBe(false);
@@ -86,7 +88,7 @@ describe('Nova identidade Matos com logo animada', () => {
 
   it('anima apenas a identidade visual e respeita movimento reduzido', () => {
     expect(brandCss).toContain('html body .sidebrand.matos-dashboard-brand .logo');
-    expect(brandCss).toContain("background-image:url('/matos-marca.svg?v=1')");
+    expect(brandCss).toContain("background-image:url('/matos-marca.svg?v=2')");
     expect(brandCss).toContain('.led-auth .matos-mark-frame img');
     expect(brandCss).toContain('@keyframes matos-mark-float');
     expect(brandCss).toContain('@keyframes matos-wordmark-enter');
@@ -97,12 +99,26 @@ describe('Nova identidade Matos com logo animada', () => {
     expect(themeCss).not.toContain('/logo-casa-matos.png');
   });
 
+  it('adapta animação e marca ao topo do celular mesmo com menu fechado', () => {
+    const navScript = read('navigation-sidebar.js');
+    expect(navScript).toContain("className='matos-mobile-top-brand'");
+    expect(navScript).toContain('matos-mobile-top-symbol');
+    expect(navScript).toContain('/matos-marca.svg?v=2');
+    expect(brandCss).toContain('@media(max-width:820px)');
+    expect(brandCss).toContain('.appbar .matos-mobile-top-brand{');
+    expect(brandCss).toContain('matos-mobile-mark-motion 4.4s');
+    expect(brandCss).toContain('html body .led-auth .matos-mark-frame{width:78px;height:78px}');
+    expect(brandCss).toContain('@media(hover:none)');
+    expect(brandCss).toContain('animation:none!important;transition:none!important');
+  });
+
   it('publica arquivos e versões atualizadas sem quebrar os outros módulos', () => {
-    expect(html).toContain('<link rel="icon" href="/matos-marca.svg?v=1"');
-    expect(html).toContain('/matos-brand.css?v=1');
-    expect(html).toContain('/theme-led.css?v=8');
-    expect(html).toContain('/theme-led.js?v=14');
+    expect(html).toContain('<link rel="icon" href="/matos-marca.svg?v=2"');
+    expect(html).toContain('/matos-brand.css?v=2');
+    expect(html).toContain('/theme-led.css?v=9');
+    expect(html).toContain('/theme-led.js?v=15');
     expect(html).toContain('/app1.js?v=20261113-4');
+    expect(html).toContain('/navigation-sidebar.js?v=2');
     expect(html).toContain('/access-management.js?v=1');
     expect(html).toContain('/monthly-report-pdf.js?v=3');
   });

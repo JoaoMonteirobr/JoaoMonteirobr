@@ -17,11 +17,19 @@
     .mark-window{animation:window-twinkle 5.4s ease-in-out infinite}
     .mark-window:nth-of-type(even){animation-delay:-2.2s}
     .mark-curve{stroke-dasharray:270;stroke-dashoffset:270;animation:curve-draw 1.15s ease-out .48s forwards}
+    .mark-spark{stroke-dasharray:19 251;stroke-dashoffset:270;opacity:0;
+      animation:matos-orbit-glint 5.6s ease-in-out 1.7s infinite}
+    @keyframes matos-orbit-glint{
+      0%,9%{stroke-dashoffset:270;opacity:0}
+      16%{opacity:.95}
+      66%{opacity:.95}
+      76%,100%{stroke-dashoffset:0;opacity:0}
+    }
     @keyframes roof-appear{from{opacity:0;transform:translateY(7px) scale(.95)}to{opacity:1;transform:none}}
     @keyframes home-appear{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
     @keyframes window-twinkle{0%,87%,100%{opacity:1}92%{opacity:.6}}
     @keyframes curve-draw{to{stroke-dashoffset:0}}
-    @media(prefers-reduced-motion:reduce){.mark-roof,.mark-homes,.mark-window,.mark-curve{animation:none;opacity:1;stroke-dashoffset:0}}
+    @media(prefers-reduced-motion:reduce){.mark-roof,.mark-homes,.mark-window,.mark-curve,.mark-spark{animation:none;opacity:1;stroke-dashoffset:0}.mark-spark{opacity:0}}
   </style>
   <g filter="url(#shadow)">
     <path class="mark-roof" d="M12 70.5 74.4 18c3.5-3 7-3 10.4 0L111 40.2V29.8c0-2.6 2.1-4.8 4.8-4.8h9.4c2.7 0 4.8 2.2 4.8 4.8v26.4L149 71c3.2 2.6 3.6 7.4 1 10.5-2.6 3.2-7.4 3.6-10.5 1L81 32.7 22.8 82.3c-3.1 2.7-7.9 2.3-10.5-.9-2.6-3.2-2.3-7.9.7-10.9Z" fill="url(#navy)"/>
@@ -35,6 +43,7 @@
       <path d="M83.4 70.1h6.9l7.7 10.8 7.8-10.8h6.9v29.2h-7.8V83.2l-6.8 9.1h-.4l-6.8-9.1v16.1h-7.5V70.1Z" fill="url(#orange)"/>
       <path d="M16 136.5c33.2-15.7 93.5-15.6 128 1.3" stroke="#FFE5C4" stroke-width="9" stroke-linecap="round" opacity=".9"/>
       <path class="mark-curve" d="M13 139.5c35.5-17.9 99.4-17.2 133 0" stroke="url(#orange)" stroke-width="8" stroke-linecap="round"/>
+      <path class="mark-spark" d="M13 139.5c35.5-17.9 99.4-17.2 133 0" stroke="#fff5d8" stroke-width="3.2" stroke-linecap="round"/>
     </g>
   </g>
 </svg>
