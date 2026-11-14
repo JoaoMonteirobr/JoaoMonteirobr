@@ -26,6 +26,7 @@ function currentName(){var n=cleanName(currentProfile&&currentProfile.nome);retu
 
 function profilePage(){
  E('content').innerHTML='<div class="simple-toolbar"><div><h2>Meu perfil</h2><p>Seu nome aparece na saudação e no topo do sistema.</p></div></div>'
+ +(currentRole==='admin'&&root.MatosAvatar?root.MatosAvatar.pickerHtml():'')
  +'<div class="perfil-grid">'
  +'<div class="panel simple-panel"><div class="panel-title"><h3>Dados</h3></div>'
  +'<div id="pf_msg"></div>'
@@ -38,6 +39,7 @@ function profilePage(){
  +'<label class="lbl" for="pw_again">Repita a senha nova</label><input id="pw_again" class="inp" type="password" autocomplete="new-password">'
  +'<button id="pw_save" class="btn secondary" type="button">Trocar senha</button></div>'
  +'</div>';
+ if(currentRole==='admin'&&root.MatosAvatar)root.MatosAvatar.mountPicker();
  E('pf_save').onclick=saveName;
  E('pw_save').onclick=savePassword;
  E('pf_nome').onkeydown=function(e){if(e.key==='Enter')saveName()};

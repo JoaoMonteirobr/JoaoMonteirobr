@@ -37,6 +37,6 @@ describe('Meu perfil', () => {
 
   it('é carregado no index.html', () => {
     const index = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
-    expect(index).toContain('/meu-perfil.js?v=1');
+    expect(index).toContain('/meu-perfil.js?v=2');
   });
 });
