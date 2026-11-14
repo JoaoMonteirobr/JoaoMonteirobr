@@ -228,7 +228,7 @@
  .iptu-received-head p{max-width:270px}
  .iptu-received-stats{grid-template-columns:1fr;gap:8px}
  .iptu-received-primary strong{font-size:19px}
- .iptu-received-secondary strong{font-size:13px}
+ .iptu-received-secondary strong{font-size:14px}
  .iptu-received-year{gap:5px}
  .iptu-received-year .inp{width:90px}
  .iptu-received-foot{align-items:start}
@@ -239,7 +239,7 @@
  .iptu-received-primary strong{font-size:17px}
  .iptu-received-secondary{gap:6px}
  .iptu-received-secondary>div{padding:10px}
- .iptu-received-secondary strong{font-size:14px}
+ .iptu-received-secondary strong{font-size:12px}
 }
 @media print{
  .iptu-received-year,.iptu-received-foot .linkmini{display:none!important}
