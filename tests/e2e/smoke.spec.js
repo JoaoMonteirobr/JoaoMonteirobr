@@ -6,6 +6,8 @@ test('shell da aplicação carrega sem tela branca', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/Matos/i);
   await expect(page.locator('#app')).toBeVisible();
+  await expect(page.locator('[data-led-open]')).toBeVisible();
+  await page.locator('[data-led-open]').click();
   await expect(page.locator('#email')).toBeVisible();
   await expect(page.locator('#senha')).toBeVisible();
   await expect(page.locator('#signin')).toBeVisible();
