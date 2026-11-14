@@ -1,0 +1,69 @@
+/* Gestão de usuários do Matos: legibilidade, identificação e ações individuais. */
+.access-management{display:flex;flex-direction:column;gap:16px;min-width:0}
+.access-title{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.access-title h2{margin:0 0 4px;font-size:22px;color:var(--ink,#163956)}
+.access-title p{margin:0;color:var(--muted,#65758a);font-size:12.5px;line-height:1.6}
+.access-admin-only,.access-header-caption{font-size:11px;color:#426985;border:1px solid #d8e5ef;background:#f3f8fd;border-radius:999px;padding:7px 11px;white-space:nowrap}
+.access-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.access-stats>div{background:var(--card,#fff);border:1px solid #e0e8f0;border-radius:13px;padding:13px 16px;display:flex;flex-direction:column;gap:5px}
+.access-stats small{font-size:11px;color:#697d90}
+.access-stats strong{font-size:22px;line-height:1.25;color:#143856;font-variant-numeric:tabular-nums}
+.access-columns{display:grid;grid-template-columns:minmax(330px,0.82fr) minmax(0,1.4fr);gap:14px;align-items:start;min-width:0}
+.access-create-panel,.access-list-panel{padding:20px;min-width:0}
+.access-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px}
+.access-panel-head h3{margin:0;font-size:16px;color:#153858}
+.access-panel-head p{font-size:12px;color:#697d90;margin:5px 0 0;line-height:1.45}
+.access-panel-hint{font-size:12px;line-height:1.65;color:#627991;margin:6px 0 17px}
+.access-create-panel .field,.access-dialog .field{margin:13px 0}
+.access-create-panel .field .lbl,.access-dialog .field .lbl{display:block;font-size:11px;font-weight:750;margin:0 0 6px}
+.access-create-panel .field .inp,.access-dialog .field .inp{width:100%;min-width:0;min-height:43px}
+.access-create-panel .field small,.access-dialog .field small{display:block;margin-top:5px;font-size:11px;color:#778798;line-height:1.5}
+.access-permission-note{background:#edf6ff;border-left:3px solid #387ec5;color:#265377;padding:10px 12px;font-size:12px;line-height:1.6;border-radius:0 9px 9px 0;margin:10px 0 14px}
+.access-owner-link{display:inline-flex;padding:5px 0;margin:6px 0 0;background:none;border:0;color:#175b9d;cursor:pointer;font-size:12px;font-weight:700;text-align:left;text-decoration:underline;text-underline-offset:3px}
+.access-owner-link:hover{color:#073b6b}
+.access-password-input{display:flex;align-items:stretch;gap:8px;min-width:0}
+.access-password-input>.inp{flex:1;min-width:0}
+.access-inline-button{background:#f0f5fa;border:1px solid #d2e0ef;color:#2c577a;min-width:67px;border-radius:9px;padding:0 9px;font-weight:700;font-size:11px;cursor:pointer}
+.access-inline-button:hover{background:#e2effc}
+.access-create-submit{width:100%;min-height:43px;margin-top:10px;font-size:13px}
+.access-search-label{display:block;margin:14px 0 7px;font-size:11px;color:#58728a;font-weight:750}
+.access-search{margin-bottom:12px}
+.access-count{min-width:32px;min-height:32px;display:grid;place-items:center;border-radius:10px;background:#eaf3fc;color:#14528e;font-weight:800;font-size:14px}
+.access-account-list{display:flex;flex-direction:column;gap:10px;max-height:650px;overflow-y:auto;padding-right:3px}
+.access-user-card{padding:14px;background:#fafcfe;border:1px solid #dfe9f2;border-radius:12px;min-width:0}
+.access-user-main{display:flex;gap:10px;align-items:center;min-width:0}
+.access-avatar{width:38px;height:38px;flex-shrink:0;border-radius:11px;background:#dcecfb;border:1px solid #cee2f4;color:#174b7b;display:grid;place-items:center;font-size:15px;font-weight:800}
+.access-user-identity{flex:1;min-width:120px}
+.access-user-identity h4{margin:0 0 4px;font-size:13px;color:#193a5b;font-weight:800;overflow-wrap:anywhere}
+.access-user-identity p{margin:0;font-size:11px;color:#6b7f92;overflow-wrap:anywhere}
+.access-role-tag{font-size:10px;color:#215c88;background:#e9f4fc;border:1px solid #cde1f1;border-radius:6px;padding:6px 8px;max-width:185px;line-height:1.3;text-align:center}
+.access-role-tag.is-admin{background:#f2f0fd;color:#58468a;border-color:#ded7f3}
+.access-user-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 11px;margin:11px 0 10px;font-size:10.5px;line-height:1.5;color:#6b7e90;overflow-wrap:anywhere}
+.access-user-meta b{font-weight:700;color:#345775}
+.access-user-actions{display:flex;flex-wrap:wrap;gap:7px;border-top:1px solid #e2ebf2;padding-top:11px}
+.access-action{display:inline-flex;align-items:center;justify-content:center;min-height:33px;padding:7px 12px;border-radius:8px;border:1px solid #cddfeb;background:#fff;color:#174d80;font-size:11px;font-weight:700;cursor:pointer}
+.access-action:hover,.access-action:focus-visible{background:#e8f4fd;border-color:#90bee2}
+.access-action-password{color:#355778}
+.access-action-delete{margin-left:auto;color:#a32930;border-color:#e6c0c4;background:#fff8f8}
+.access-action-delete:hover,.access-action-delete:focus-visible{background:#ffe5e8;border-color:#d48e94}
+.access-protected{font-size:11px;color:#697b8e;background:#f3f6f9;border-radius:7px;padding:9px 11px;line-height:1.45}
+.access-empty{margin:10px 0;padding:20px;background:#f6f9fc;border:1px dashed #c4d7e7;border-radius:10px;color:#67809a;font-size:12px}
+.access-message{font-size:12px;line-height:1.55}
+.access-message:not(:empty){padding:10px 12px;border-radius:8px;margin:12px 0;border:1px solid #cdddea;background:#f2f7fc;color:#214c70}
+.access-message.is-error{background:#fff2f2;color:#a12e34;border-color:#ebc3c3}
+.access-message.is-success{background:#edf8f1;color:#24643d;border-color:#bbdfc7}
+.access-flash{margin:0}
+.access-footnote{font-size:11px;color:#768699;line-height:1.55;margin:2px}
+.access-modal-overlay{z-index:130;overflow-y:auto;padding:12px}
+.access-dialog{max-width:550px;width:min(96vw,550px);max-height:94vh;overflow-y:auto}
+.access-dialog .modalbody{padding:18px 22px}
+.access-dialog .modalfoot{padding:14px 22px;gap:9px}
+.access-delete-warning{border-left:4px solid #c74b52;background:#fff2f3;color:#823139;padding:12px 14px;border-radius:0 9px 9px 0;margin-bottom:15px;line-height:1.55;font-size:12px}
+.access-delete-warning p{margin:6px 0 0;font-size:12px}
+.access-danger-button{background:#b42e35!important;border:1px solid #b42e35!important;color:#fff!important;font-weight:750}
+.access-danger-button:hover{background:#8b242b!important}
+.access-danger-button:disabled{opacity:.6;cursor:wait}
+@media(max-width:1220px){.access-columns{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}.access-create-panel,.access-list-panel{padding:16px}.access-user-main{flex-wrap:wrap}.access-role-tag{margin-left:48px}}
+@media(max-width:920px){.access-columns{grid-template-columns:1fr}.access-account-list{max-height:none}.access-user-main{flex-wrap:nowrap}.access-role-tag{margin-left:0}}
+@media(max-width:600px){.access-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.access-stats>div{padding:11px 12px}.access-stats strong{font-size:20px}.access-title h2{font-size:19px}.access-user-main{flex-wrap:wrap}.access-role-tag{margin-left:48px}.access-user-meta{grid-template-columns:1fr}.access-user-actions{gap:6px}.access-action{flex:1;min-width:90px}.access-action-delete{margin-left:0}.access-dialog .modalbody,.access-dialog .modalfoot{padding:13px}}
+@media print{.access-user-actions,.access-create-panel,.access-search,.access-search-label{display:none!important}.access-account-list{max-height:none;overflow:visible}}
